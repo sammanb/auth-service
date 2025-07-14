@@ -1,0 +1,51 @@
+# Binaries
+auth-service
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Output folders
+/bin/
+/build/
+/dist/
+
+# Go build cache
+*.test
+*.out
+*.coverprofile
+
+# Go module/vendor
+vendor/
+go.sum
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Environment & config
+.env
+.env.*
+config.yaml
+*.local
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml
+*.pid
+tmp/
+
+# Dependency graph / analysis
+go.work
+go.work.sum
