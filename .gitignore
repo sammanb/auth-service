@@ -49,3 +49,4 @@ tmp/
 # Dependency graph / analysis
 go.work
 go.work.sum
+.env
