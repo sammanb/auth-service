@@ -42,15 +42,15 @@ var (
 )
 
 var defaultActions = map[string][]string{
-	string(Admin):  []string{string(ActionRead), string(ActionCreate), string(ActionUpdate), string(ActionDelete)},
-	string(Member): []string{string(ActionRead), string(ActionCreate), string(ActionUpdate)},
-	string(Guest):  []string{string(ActionRead)},
+	string(Admin):  {string(ActionRead), string(ActionCreate), string(ActionUpdate), string(ActionDelete)},
+	string(Member): {string(ActionRead), string(ActionCreate), string(ActionUpdate)},
+	string(Guest):  {string(ActionRead)},
 }
 
 var defaultResources = map[string][]string{
-	string(Admin):  []string{string(ResourceFile), string(ResourceWorkspace), string(ResourceUser)},
-	string(Member): []string{string(ResourceFile), string(ResourceWorkspace)},
-	string(Guest):  []string{string(ResourceFile)},
+	string(Admin):  {string(ResourceFile), string(ResourceWorkspace), string(ResourceUser)},
+	string(Member): {string(ResourceFile), string(ResourceWorkspace)},
+	string(Guest):  {string(ResourceFile)},
 }
 
 func SeedRoles(db *gorm.DB) error {
