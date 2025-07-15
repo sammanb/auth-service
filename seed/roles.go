@@ -16,6 +16,15 @@ import (
 // 	Viewer
 // 	Contributor
 
+type Action string
+
+var (
+	ActionRead   Action = "read"
+	ActionCreate Action = "create"
+	ActionUpdate Action = "update"
+	ActionDelete Action = "delete"
+)
+
 type Role string
 
 var (
