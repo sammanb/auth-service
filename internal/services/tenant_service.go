@@ -1,7 +1,6 @@
 package services
 
 import (
-	"github.com/google/uuid"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/repository"
 )
@@ -22,12 +21,11 @@ func NewTenantSvc(repo repository.TenantRepository) *TenantSvc {
 }
 
 func (s *TenantSvc) CreateTenant(requester *models.User, name string) (*models.Tenant, error) {
-	if requester.Role != models.RoleSuperAdmin {
+	if requester.Role.Name != models.RoleSuperAdmin {
 		return nil, ErrUnauthorized
 	}
 
 	tenant := &models.Tenant{
-		ID:   uuid.NewString(),
 		Name: name,
 	}
 
@@ -39,7 +37,7 @@ func (s *TenantSvc) CreateTenant(requester *models.User, name string) (*models.T
 }
 
 func (s *TenantSvc) GetTenants(requestor *models.User, page, limit int) ([]*models.Tenant, error) {
-	if requestor.Role != models.RoleSuperAdmin {
+	if requestor.Role.Name != models.RoleSuperAdmin {
 		return nil, ErrUnauthorized
 	}
 
@@ -47,7 +45,7 @@ func (s *TenantSvc) GetTenants(requestor *models.User, page, limit int) ([]*mode
 }
 
 func (s *TenantSvc) GetTenantById(requestor *models.User, id string) (*models.Tenant, error) {
-	if requestor.Role != models.RoleSuperAdmin {
+	if requestor.Role.Name != models.RoleSuperAdmin {
 		return nil, ErrUnauthorized
 	}
 
@@ -55,7 +53,7 @@ func (s *TenantSvc) GetTenantById(requestor *models.User, id string) (*models.Te
 }
 
 func (s *TenantSvc) DeleteTenantById(requestor *models.User, id string) (bool, error) {
-	if requestor.Role != models.RoleSuperAdmin {
+	if requestor.Role.Name != models.RoleSuperAdmin {
 		return false, ErrUnauthorized
 	}
 
