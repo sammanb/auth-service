@@ -8,11 +8,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/samvibes/vexop/auth-service/internal/models"
+	"gorm.io/gorm"
 )
 
-var jwtSecret = []byte("secret-key")
+const UserContextKey = "currentUser"
 
-func JWTAuthMiddleware() gin.HandlerFunc {
+func JWTAuthMiddleware(db *gorm.DB, jwtSecret []byte) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -36,17 +37,15 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		user := models.User{
-			ID:   parseUUID(claims["id"]),
-			Role: models.UserRole(claims["role"].(string)),
+		userId := parseUUID(claims["id"])
+
+		var user models.User
+		if err := db.Preload("Role").First(&user, "id =?", userId).Error; err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+			return
 		}
 
-		if claims["tenant_id"] != nil {
-			tenantID := parseUUID(claims["tenant_id"])
-			user.TenantID = &tenantID
-		}
-
-		c.Set("user", user)
+		c.Set(UserContextKey, user)
 		c.Next()
 	}
 }
