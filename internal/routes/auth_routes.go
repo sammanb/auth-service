@@ -8,5 +8,5 @@ import (
 func RegisterAPIRoutes(group *gin.RouterGroup, authHandler handlers.AuthInterface) {
 	group.GET("/health", authHandler.Health)
 	group.POST("/signup", authHandler.SignUp)
-	group.POST("/auth", authHandler.Login)
+	group.POST("/login", authHandler.Login)
 }
