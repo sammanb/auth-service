@@ -54,7 +54,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 	}
 
 	if err := h.userService.CreateUser(user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user: " + err.Error()})
 		return
 	}
 
