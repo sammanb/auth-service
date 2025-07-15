@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/samvibes/vexop/auth-service/internal/models"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -18,21 +19,14 @@ func CompareHashAndPassword(password, hashed []byte) bool {
 	return err == nil
 }
 
-var jwtSecret = []byte("secret-key")
-
 func GenerateJWT(user *models.User) (string, error) {
 	userID := user.ID
-	tenantID := user.TenantID
-	role := user.Role
 	claims := jwt.MapClaims{
-		"id":   userID.String(),
-		"role": role,
-		"exp":  time.Now().Add(24 * time.Hour).Unix(),
+		"id":  userID.String(),
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
 	}
 
-	if tenantID != nil {
-		claims["tenant_id"] = tenantID.String()
-	}
+	jwtSecret := []byte(viper.GetString("JWT_SECRET"))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
