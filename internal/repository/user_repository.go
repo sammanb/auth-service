@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"gorm.io/gorm"
@@ -20,7 +22,21 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (u *UserRepo) CreateUser(user *models.User) error {
+	// fetch default role - there MUST be one default role
+	var role models.Role
+	err := u.db.Where("is_default = true").First(&role).Error
+	if err != nil {
+		return errors.New("critical error: no default role found")
+	}
+	// Also check if tenant_id is valid
+	var tenant models.Tenant
+	err = u.db.Where("id = ?", user.TenantID).First(&tenant).Error
+	if err != nil {
+		return errors.New("tenant " + err.Error())
+	}
 	user.ID = uuid.New()
+	user.Role = role
+	user.RoleID = role.ID.String()
 	return u.db.Create(user).Error
 }
 
