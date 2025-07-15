@@ -56,22 +56,24 @@ var defaultResources = map[string][]string{
 func SeedRoles(db *gorm.DB) error {
 	adminActions := defaultActions[string(Admin)]
 	adminResources := defaultResources[string(Admin)]
-	err := SetResourcePermissions(db, string(Admin), adminActions, adminResources)
+	isDefault := true
+	err := SetResourcePermissions(db, string(Admin), adminActions, adminResources, isDefault)
 	if err != nil {
 		log.Println("failed to create admin roles")
 	}
 
+	isDefault = false
 	memberActions := defaultActions[string(Member)]
 	memberResources := defaultActions[string(Member)]
 
-	err = SetResourcePermissions(db, string(Member), memberActions, memberResources)
+	err = SetResourcePermissions(db, string(Member), memberActions, memberResources, isDefault)
 	if err != nil {
 		log.Println("failed to create member roles")
 	}
 
 	guestActions := defaultActions[string(Guest)]
 	guestResources := defaultResources[string(Guest)]
-	err = SetResourcePermissions(db, string(Guest), guestActions, guestResources)
+	err = SetResourcePermissions(db, string(Guest), guestActions, guestResources, isDefault)
 	if err != nil {
 		log.Println("failed to create guest roles")
 	}
@@ -79,7 +81,7 @@ func SeedRoles(db *gorm.DB) error {
 	return nil
 }
 
-func SetResourcePermissions(db *gorm.DB, role string, actions []string, resources []string) error {
+func SetResourcePermissions(db *gorm.DB, role string, actions []string, resources []string, isDefault bool) error {
 	var permissions []*models.Permission
 	tx := db.Begin()
 	defer func() {
@@ -109,6 +111,7 @@ func SetResourcePermissions(db *gorm.DB, role string, actions []string, resource
 	newRole := &models.Role{
 		Name:        role,
 		Permissions: permissions,
+		IsDefault:   isDefault,
 	}
 	err := tx.Create(newRole).Error
 	if err != nil {
