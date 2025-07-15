@@ -1,24 +1,21 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type UserRole string
-
-const (
-	RoleSuperAdmin UserRole = "superadmin"
-	RoleAdmin      UserRole = "admin"
-	RoleMemeber    UserRole = "member"
-	RoleGuest      UserRole = "guest"
-)
-
 type User struct {
-	ID           uuid.UUID  `gorm:"type:uuid;primary_key;" json:"id"`
+	ID           uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
 	TenantID     *uuid.UUID `gorm:"type:uuid"`
 	Email        string     `gorm:"uniqueIndex;not null" json:"email"`
 	PasswordHash string     `gorm:"not null" json:"-"`
-	Role         UserRole   `gorm:"type:varchar(20);not null"`
-	gorm.Model
+	RoleID       string     `json:"role_id"`
+	Role         Role       `gorm:"foreignKey:RoleID" json:"role"`
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
