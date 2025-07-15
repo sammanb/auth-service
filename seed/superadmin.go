@@ -32,11 +32,18 @@ func SeedSuperAdmin(db *gorm.DB) {
 		return
 	}
 
+	superadminRole := models.Role{
+		Name:        models.RoleSuperAdmin,
+		Permissions: []*models.Permission{},
+	}
+	db.Create(&superadminRole)
+
 	superadmin := models.User{
 		ID:           uuid.New(),
 		Email:        email,
 		PasswordHash: hashed,
-		Role:         models.RoleSuperAdmin,
+		Role:         superadminRole,
+		RoleID:       superadminRole.ID.String(),
 	}
 	db.Create(&superadmin)
 	log.Println("Superadmin created: ", email)

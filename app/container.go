@@ -18,9 +18,15 @@ type AppContainer struct {
 
 func InitApp() *AppContainer {
 	db := config.InitDB()
-	db.AutoMigrate(&models.User{}, &models.Tenant{})
+	db.AutoMigrate(
+		&models.User{},
+		&models.Tenant{},
+		&models.Role{},
+		&models.Permission{},
+	)
 
 	seed.SeedSuperAdmin(db)
+	seed.SeedRoles(db)
 
 	userRepo := repository.NewUserRepository(db)
 	userService := services.NewUserService(userRepo)
