@@ -9,7 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/samvibes/vexop/auth-service/internal/repository/mocks"
+	"github.com/samvibes/vexop/auth-service/internal/handlers"
+	repoMock "github.com/samvibes/vexop/auth-service/internal/repository/mocks"
+	serviceMock "github.com/samvibes/vexop/auth-service/internal/services/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,9 +19,9 @@ import (
 func TestSignup_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	mockRepo := new(mocks.MockUserRepository)
-	mockUserService := new(mocks.MockUserService)
-	handler := NewAuthHandler(mockUserService)
+	mockRepo := new(repoMock.MockUserRepository)
+	mockUserService := new(serviceMock.MockUserService)
+	handler := handlers.NewAuthHandler(mockUserService)
 
 	tenantID := uuid.New().String()
 
