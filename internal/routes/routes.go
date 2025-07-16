@@ -8,16 +8,21 @@ import (
 )
 
 func InitRoutes(container *app.AppContainer) *gin.Engine {
+	jwtSecret := []byte(viper.GetString("JWT_SECRET"))
+
 	router := gin.Default()
+	router.Use(middleware.JWTAuthMiddleware(container.DB, jwtSecret))
+	router.Use(middleware.AutoRBAC())
 
 	auth_api := router.Group("/api/auth")
 	RegisterAPIRoutes(auth_api, container.AuthHandler)
 
-	jwtSecret := []byte(viper.GetString("JWT_SECRET"))
-
+	// Super admin APIs
 	sa_api := router.Group("/api/sa")
-	sa_api.Use(middleware.JWTAuthMiddleware(container.DB, jwtSecret))
 	RegisterSARoutes(sa_api, container.TenantHandler)
+
+	invite_api := router.Group("/api/invites")
+	RegisterInviteRoutes(invite_api, container.InviteHandler)
 
 	return router
 }
