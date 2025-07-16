@@ -27,6 +27,7 @@ var (
 	ResourceUser      Resource = "user"
 	ResourceFile      Resource = "file"
 	ResourceWorkspace Resource = "workspace"
+	ResourceInvite    Resource = "invite"
 )
 
 var MethodToAction = map[string]string{
