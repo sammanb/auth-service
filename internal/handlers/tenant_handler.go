@@ -5,7 +5,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/services"
+	"github.com/samvibes/vexop/auth-service/internal/utils"
 )
 
 type TenantHandler struct {
@@ -16,17 +18,7 @@ func NewTenantHandler(service services.TenantSvcInterface) *TenantHandler {
 	return &TenantHandler{service: service}
 }
 
-type CreateTenantRequest struct {
-	Name string `json:"name" binding:"required"`
-}
-
 func (h *TenantHandler) GetTenants(c *gin.Context) {
-	requestor := GetCurrentUser(c)
-	if requestor == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found in context"})
-		return
-	}
-
 	pageStr, _ := c.GetQuery("page")
 	limitStr, _ := c.GetQuery("limit")
 	idStr, _ := c.GetQuery("id")
@@ -46,6 +38,8 @@ func (h *TenantHandler) GetTenants(c *gin.Context) {
 		limit = 10
 	}
 
+	requestor := utils.GetCurrentUser(c)
+
 	tenants, err := h.service.GetTenants(requestor, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get tenants"})
@@ -56,17 +50,13 @@ func (h *TenantHandler) GetTenants(c *gin.Context) {
 }
 
 func (h *TenantHandler) GetTenantById(c *gin.Context) {
-	requestor := GetCurrentUser(c)
-	if requestor == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found in context"})
-		return
-	}
-
 	id, ok := c.GetQuery("id")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required in query"})
 		return
 	}
+
+	requestor := utils.GetCurrentUser(c)
 
 	tenant, err := h.service.GetTenantById(requestor, id)
 	if err != nil {
@@ -78,17 +68,13 @@ func (h *TenantHandler) GetTenantById(c *gin.Context) {
 }
 
 func (h *TenantHandler) CreateTenant(c *gin.Context) {
-	requestor := GetCurrentUser(c)
-	if requestor == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found in context"})
-		return
-	}
-
-	var req CreateTenantRequest
+	var req dto.CreateTenantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	requestor := utils.GetCurrentUser(c)
 
 	tenant, err := h.service.CreateTenant(requestor, req.Name)
 	if err != nil {
@@ -104,17 +90,13 @@ func (h *TenantHandler) CreateTenant(c *gin.Context) {
 }
 
 func (h *TenantHandler) DeleteTenant(c *gin.Context) {
-	requestor := GetCurrentUser(c)
-	if requestor == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found in context"})
-		return
-	}
-
 	id, ok := c.GetQuery("id")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required in query"})
 		return
 	}
+
+	requestor := utils.GetCurrentUser(c)
 
 	didDelete, err := h.service.DeleteTenantById(requestor, id)
 	if !didDelete {
