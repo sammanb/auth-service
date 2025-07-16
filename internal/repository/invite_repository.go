@@ -1,13 +1,15 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"gorm.io/gorm"
 )
 
 type InviteRepository interface {
 	CreateInvite(*models.Invitation) error
-	GetInvites(string, int, int) (*[]models.Invitation, error)
+	GetInvites(string, int, int) ([]*models.Invitation, error)
 	RemoveInvite(string) error
 	AcceptInvite(string) error
 }
@@ -27,12 +29,12 @@ func (i *InviteRepo) CreateInvite(invitation *models.Invitation) error {
 	return nil
 }
 
-func (i *InviteRepo) GetInvites(tenant_id string, page, limit int) (*[]models.Invitation, error) {
-	var invitations []models.Invitation
-	if err := i.db.Where("tenant_id = ?", tenant_id).Find(&invitations).Offset(page).Limit(limit).Error; err != nil {
+func (i *InviteRepo) GetInvites(tenant_id string, page, limit int) ([]*models.Invitation, error) {
+	var invitations []*models.Invitation
+	if err := i.db.Where("tenant_id = ? AND accepted = ? AND expires_at > ?", tenant_id, false, time.Now()).Find(&invitations).Offset(page).Limit(limit).Error; err != nil {
 		return nil, err
 	}
-	return &invitations, nil
+	return invitations, nil
 }
 
 func (i *InviteRepo) RemoveInvite(inviteID string) error {

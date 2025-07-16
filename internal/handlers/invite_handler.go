@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samvibes/vexop/auth-service/internal/dto"
@@ -40,7 +41,29 @@ func (i *InviteHandler) CreateInvite(c *gin.Context) {
 }
 
 func (i *InviteHandler) GetInvites(c *gin.Context) {
+	pageStr := c.Query("page")
+	limitStr := c.Query("limit")
 
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	requestor := utils.GetCurrentUser(c)
+	invitations, err := i.inviteService.GetInvites(requestor, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, invitations)
 }
 
 func (i *InviteHandler) RemoveInvite(c *gin.Context) {}

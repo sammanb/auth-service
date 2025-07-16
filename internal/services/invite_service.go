@@ -44,3 +44,7 @@ func (i *InviteService) CreateInvite(requestor *models.User, email, role string,
 
 	return token, nil
 }
+
+func (i *InviteService) GetInvites(requestor *models.User, page, limit int) ([]*models.Invitation, error) {
+	return i.inviteRepo.GetInvites(requestor.TenantID.String(), page, limit)
+}
