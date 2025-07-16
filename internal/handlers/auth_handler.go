@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/services"
 )
@@ -28,7 +29,7 @@ func (h *AuthHandler) Health(c *gin.Context) {
 }
 
 func (h *AuthHandler) SignUp(c *gin.Context) {
-	var req SignupRequest
+	var req dto.SignupRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -62,7 +63,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req LoginRequest
+	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
