@@ -11,6 +11,8 @@ import (
 type UserRepository interface {
 	CreateUser(user *models.User) error
 	FindUserByEmail(email string) (*models.User, error)
+	RemoveUserById(id string) error
+	RemoveUserByEmail(email string, tenant_id string) error
 }
 
 type UserRepo struct {
@@ -47,4 +49,30 @@ func (u *UserRepo) FindUserByEmail(email string) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+func (u *UserRepo) RemoveUserById(id string) error {
+	var user models.User
+	if err := u.db.Where("id = ?", id).First(&user).Error; err != nil {
+		return err
+	}
+
+	if err := u.db.Delete(user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserRepo) RemoveUserByEmail(id string, tenant_id string) error {
+	var user models.User
+	if err := u.db.Where("id = ?, tenant_id = ?", id, tenant_id).First(&user).Error; err != nil {
+		return err
+	}
+
+	if err := u.db.Delete(user).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

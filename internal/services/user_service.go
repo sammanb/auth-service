@@ -38,3 +38,17 @@ func (u *UserService) Login(email, password string) (string, error) {
 	// generate jwt token
 	return GenerateJWT(user)
 }
+
+func (u *UserService) RemoveUserById(id string) error {
+	if err := u.userRepo.RemoveUserById(id); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UserService) RemoveUserByEmail(email string, tenant_id string) error {
+	if err := u.userRepo.RemoveUserByEmail(email, tenant_id); err != nil {
+		return err
+	}
+	return nil
+}

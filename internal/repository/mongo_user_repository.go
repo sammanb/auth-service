@@ -37,3 +37,10 @@ func (m *MongoUserRepo) FindUserByEmail(email string) (*models.User, error) {
 
 	return user, nil
 }
+
+func (m *MongoUserRepo) RemoveUserById(id string) error {
+	return nil
+}
+func (m *MongoUserRepo) RemoveUserByEmail(email string, tenant_id string) error {
+	return nil
+}
