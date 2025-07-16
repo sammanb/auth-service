@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/samvibes/vexop/auth-service/internal/models"
+	"github.com/samvibes/vexop/auth-service/internal/utils"
 	"gorm.io/gorm"
 )
 
@@ -16,64 +17,38 @@ import (
 // 	Viewer
 // 	Contributor
 
-type Action string
-
-var (
-	ActionRead   Action = "read"
-	ActionCreate Action = "create"
-	ActionUpdate Action = "update"
-	ActionDelete Action = "delete"
-)
-
-type Role string
-
-var (
-	Admin  Role = "admin"
-	Member Role = "member"
-	Guest  Role = "guest"
-)
-
-type Resource string
-
-var (
-	ResourceUser      Resource = "user"
-	ResourceFile      Resource = "file"
-	ResourceWorkspace Resource = "workspace"
-)
-
 var defaultActions = map[string][]string{
-	string(Admin):  {string(ActionRead), string(ActionCreate), string(ActionUpdate), string(ActionDelete)},
-	string(Member): {string(ActionRead), string(ActionCreate), string(ActionUpdate)},
-	string(Guest):  {string(ActionRead)},
+	string(utils.Admin):  {string(utils.ActionRead), string(utils.ActionCreate), string(utils.ActionUpdate), string(utils.ActionDelete)},
+	string(utils.Member): {string(utils.ActionRead), string(utils.ActionCreate), string(utils.ActionUpdate)},
+	string(utils.Guest):  {string(utils.ActionRead)},
 }
 
 var defaultResources = map[string][]string{
-	string(Admin):  {string(ResourceFile), string(ResourceWorkspace), string(ResourceUser)},
-	string(Member): {string(ResourceFile), string(ResourceWorkspace)},
-	string(Guest):  {string(ResourceFile)},
+	string(utils.Admin):  {string(utils.ResourceFile), string(utils.ResourceWorkspace), string(utils.ResourceUser)},
+	string(utils.Member): {string(utils.ResourceFile), string(utils.ResourceWorkspace)},
+	string(utils.Guest):  {string(utils.ResourceFile)},
 }
 
 func SeedRoles(db *gorm.DB) error {
-	adminActions := defaultActions[string(Admin)]
-	adminResources := defaultResources[string(Admin)]
-	isDefault := true
-	err := SetResourcePermissions(db, string(Admin), adminActions, adminResources, isDefault)
+	adminActions := defaultActions[string(utils.Admin)]
+	adminResources := defaultResources[string(utils.Admin)]
+
+	err := SetResourcePermissions(db, string(utils.Admin), adminActions, adminResources)
 	if err != nil {
 		log.Println("failed to create admin roles")
 	}
 
-	isDefault = false
-	memberActions := defaultActions[string(Member)]
-	memberResources := defaultActions[string(Member)]
+	memberActions := defaultActions[string(utils.Member)]
+	memberResources := defaultActions[string(utils.Member)]
 
-	err = SetResourcePermissions(db, string(Member), memberActions, memberResources, isDefault)
+	err = SetResourcePermissions(db, string(utils.Member), memberActions, memberResources)
 	if err != nil {
 		log.Println("failed to create member roles")
 	}
 
-	guestActions := defaultActions[string(Guest)]
-	guestResources := defaultResources[string(Guest)]
-	err = SetResourcePermissions(db, string(Guest), guestActions, guestResources, isDefault)
+	guestActions := defaultActions[string(utils.Guest)]
+	guestResources := defaultResources[string(utils.Guest)]
+	err = SetResourcePermissions(db, string(utils.Guest), guestActions, guestResources)
 	if err != nil {
 		log.Println("failed to create guest roles")
 	}
@@ -81,7 +56,7 @@ func SeedRoles(db *gorm.DB) error {
 	return nil
 }
 
-func SetResourcePermissions(db *gorm.DB, role string, actions []string, resources []string, isDefault bool) error {
+func SetResourcePermissions(db *gorm.DB, role string, actions []string, resources []string) error {
 	var permissions []*models.Permission
 	tx := db.Begin()
 	defer func() {
@@ -111,7 +86,6 @@ func SetResourcePermissions(db *gorm.DB, role string, actions []string, resource
 	newRole := &models.Role{
 		Name:        role,
 		Permissions: permissions,
-		IsDefault:   isDefault,
 	}
 	err := tx.Create(newRole).Error
 	if err != nil {
