@@ -14,8 +14,9 @@ type User struct {
 	PasswordHash string     `gorm:"not null" json:"-"`
 	RoleID       string     `json:"role_id"`
 	Role         Role       `gorm:"foreignKey:RoleID" json:"role"`
+	IsOwner      bool       `gorm:"not null;default:false" json:"is_owner"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

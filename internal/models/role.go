@@ -15,7 +15,7 @@ type Role struct {
 	Permissions []*Permission `gorm:"many2many:role_permissions" json:"permissions"`
 	IsDefault   bool          `gorm:"type:boolean;default:false" json:"is_default"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

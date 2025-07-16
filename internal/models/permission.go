@@ -13,7 +13,7 @@ type Permission struct {
 	Resource string    `gorm:"not null" json:"resource"` // e.g. user, workspace, file
 	Code     string    `gorm:"uniqueIndex;" json:"code"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
