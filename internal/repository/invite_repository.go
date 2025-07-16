@@ -1,13 +1,12 @@
 package repository
 
 import (
-	"github.com/google/uuid"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"gorm.io/gorm"
 )
 
 type InviteRepository interface {
-	CreateInvite(string, string, uuid.UUID) error
+	CreateInvite(*models.Invitation) error
 	GetInvites(string, int, int) (*[]models.Invitation, error)
 	RemoveInvite(string) error
 	AcceptInvite(string) error
@@ -21,13 +20,8 @@ func NewInviteRepository(db *gorm.DB) InviteRepository {
 	return &InviteRepo{db: db}
 }
 
-func (i *InviteRepo) CreateInvite(email, role string, tenantId uuid.UUID) error {
-	invite := models.Invitation{
-		Email:    email,
-		TenantID: tenantId,
-		Role:     role,
-	}
-	if err := i.db.Create(invite).Error; err != nil {
+func (i *InviteRepo) CreateInvite(invitation *models.Invitation) error {
+	if err := i.db.Create(invitation).Error; err != nil {
 		return err
 	}
 	return nil

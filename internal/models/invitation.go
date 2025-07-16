@@ -11,8 +11,8 @@ type Invitation struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	Email     string    `gorm:"not null" json:"email"`
 	TenantID  uuid.UUID `gorm:"type:uuid;not null" json:"tenant_id"`
-	Token     string    `gorm:"uniqueIndex;not null" json:"token"`
 	Role      string    `gorm:"not null" json:"role"`
+	TokenHash string    `gorm:"uniqueIndex;not null" json:"token"`
 	ExpiresAt time.Time `gorm:"not null"`
 	Accepted  bool      `gorm:"not null;default:false" json:"accepted"`
 	CreatedBy uuid.UUID `gorm:"type:uuid;not null" json:"created_by"`

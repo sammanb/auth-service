@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,11 +27,14 @@ func (i *InviteHandler) CreateInvite(c *gin.Context) {
 	}
 
 	requestor := utils.GetCurrentUser(c)
-	err := i.inviteService.CreateInvite(requestor, createInviteReq.Email, createInviteReq.Role, createInviteReq.TenantID)
+	token, err := i.inviteService.CreateInvite(requestor, createInviteReq.Email, createInviteReq.Role, createInviteReq.TenantID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// send token via email
+	fmt.Println(token)
 
 	c.JSON(http.StatusCreated, gin.H{"message": "invite sent"})
 }
