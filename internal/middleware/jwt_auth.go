@@ -8,10 +8,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/samvibes/vexop/auth-service/internal/models"
+	"github.com/samvibes/vexop/auth-service/internal/utils"
 	"gorm.io/gorm"
 )
-
-const UserContextKey = "currentUser"
 
 func JWTAuthMiddleware(db *gorm.DB, jwtSecret []byte) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -45,7 +44,7 @@ func JWTAuthMiddleware(db *gorm.DB, jwtSecret []byte) gin.HandlerFunc {
 			return
 		}
 
-		c.Set(UserContextKey, user)
+		c.Set(utils.UserContextKey, user)
 		c.Next()
 	}
 }

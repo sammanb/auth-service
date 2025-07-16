@@ -8,13 +8,23 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/samvibes/vexop/auth-service/config"
 	"github.com/samvibes/vexop/auth-service/internal/models"
+	"github.com/samvibes/vexop/auth-service/internal/utils"
 )
 
-func RequirePermission(action, resource string) gin.HandlerFunc {
+func GetCurrentUser(c *gin.Context) *models.User {
+	userVar, exists := c.Get(utils.UserContextKey)
+	if !exists {
+		return nil
+	}
+	user := userVar.(models.User)
+	return &user
+}
+
+func requirePermission(action, resource string) gin.HandlerFunc {
 	code := fmt.Sprintf("%s:%s", action, resource)
 
 	return func(c *gin.Context) {
-		userVar, exists := c.Get(UserContextKey)
+		userVar, exists := c.Get(utils.UserContextKey)
 		if !exists {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
@@ -38,16 +48,15 @@ func RequirePermission(action, resource string) gin.HandlerFunc {
 	}
 }
 
-func HasPermission(c *gin.Context, action, resource string) bool {
-	userVar, exists := c.Get(UserContextKey)
+func hasPermission(c *gin.Context, action, resource string) bool {
+	userVar, exists := c.Get(utils.UserContextKey)
 	if !exists {
 		return false
 	}
 
 	user := userVar.(models.User)
 
-	if strings.ToLower(user.Role.Name) == "superadmin" ||
-		strings.ToLower(user.Role.Name) == "admin" {
+	if strings.ToLower(user.Role.Name) == "superadmin" {
 		return true
 	}
 
@@ -64,4 +73,39 @@ func HasPermission(c *gin.Context, action, resource string) bool {
 	}
 
 	return false
+}
+
+func extractResource(c *gin.Context) string {
+	path := c.FullPath()
+
+	// split and return the first segment
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) > 0 {
+		return utils.Singularize(parts[0])
+	}
+	return ""
+}
+
+func AutoRBAC() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		requestor := GetCurrentUser(c)
+		if requestor == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found in context"})
+			return
+		}
+		action := utils.MethodToAction[c.Request.Method]
+		resource := extractResource(c)
+
+		if action == "" || resource == "" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "unable to determine action or resource"})
+			return
+		}
+
+		if !hasPermission(c, action, resource) {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "access denied"})
+			return
+		}
+
+		c.Next()
+	}
 }
