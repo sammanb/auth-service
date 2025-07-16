@@ -80,8 +80,8 @@ func extractResource(c *gin.Context) string {
 
 	// split and return the first segment
 	parts := strings.Split(strings.Trim(path, "/"), "/")
-	if len(parts) > 0 {
-		return utils.Singularize(parts[0])
+	if len(parts) >= 2 {
+		return utils.Singularize(parts[1])
 	}
 	return ""
 }
