@@ -17,46 +17,70 @@ import (
 // 	Viewer
 // 	Contributor
 
-var defaultActions = map[string][]string{
-	string(utils.Admin):  {string(utils.ActionRead), string(utils.ActionCreate), string(utils.ActionUpdate), string(utils.ActionDelete)},
-	string(utils.Member): {string(utils.ActionRead), string(utils.ActionCreate), string(utils.ActionUpdate)},
-	string(utils.Guest):  {string(utils.ActionRead)},
+// All resource permissions
+var adminRole = map[utils.Resource][]utils.Action{
+	utils.ResourceFile:      {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate, utils.ActionDelete},
+	utils.ResourceWorkspace: {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate, utils.ActionDelete},
+	utils.ResourceUser:      {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate, utils.ActionDelete},
+	utils.ResourceInvite:    {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate, utils.ActionDelete},
 }
 
-var defaultResources = map[string][]string{
-	string(utils.Admin):  {string(utils.ResourceFile), string(utils.ResourceWorkspace), string(utils.ResourceUser)},
-	string(utils.Member): {string(utils.ResourceFile), string(utils.ResourceWorkspace)},
-	string(utils.Guest):  {string(utils.ResourceFile)},
+var memberRole = map[utils.Resource][]utils.Action{
+	utils.ResourceFile:      {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate},
+	utils.ResourceWorkspace: {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate},
+	utils.ResourceUser:      {utils.ActionRead},
+	utils.ResourceInvite:    {utils.ActionRead, utils.ActionUpdate},
+}
+
+var guestRole = map[utils.Resource][]utils.Action{
+	utils.ResourceFile:      {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate},
+	utils.ResourceWorkspace: {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate},
+	utils.ResourceUser:      {utils.ActionRead},
+	utils.ResourceInvite:    {utils.ActionRead, utils.ActionUpdate},
 }
 
 func SeedRoles(db *gorm.DB) error {
-	adminActions := defaultActions[string(utils.Admin)]
-	adminResources := defaultResources[string(utils.Admin)]
-
-	err := SetResourcePermissions(db, string(utils.Admin), adminActions, adminResources)
-	if err != nil {
-		log.Println("failed to create admin roles")
+	permissions := make([]*models.Permission, 0)
+	permissionMap := make(map[string]*models.Permission, 0)
+	for resource := range adminRole {
+		actions := adminRole[resource]
+		_permissions, err := CreatePermissions(db, resource, actions)
+		if err != nil {
+			log.Printf("failed to create admin role for %s\n", resource)
+		}
+		permissions = append(permissions, _permissions...)
+		for _, perm := range permissions {
+			permissionMap[perm.Code] = perm
+		}
 	}
+	CreateRole(db, string(utils.Admin), permissions, true)
 
-	memberActions := defaultActions[string(utils.Member)]
-	memberResources := defaultActions[string(utils.Member)]
-
-	err = SetResourcePermissions(db, string(utils.Member), memberActions, memberResources)
-	if err != nil {
-		log.Println("failed to create member roles")
+	permissions = make([]*models.Permission, 0)
+	for resource := range memberRole {
+		actions := memberRole[resource]
+		for _, action := range actions {
+			code := fmt.Sprintf("%s:%s", resource, action)
+			perm := permissionMap[code]
+			permissions = append(permissions, perm)
+		}
 	}
+	CreateRole(db, string(utils.Member), permissions, false)
 
-	guestActions := defaultActions[string(utils.Guest)]
-	guestResources := defaultResources[string(utils.Guest)]
-	err = SetResourcePermissions(db, string(utils.Guest), guestActions, guestResources)
-	if err != nil {
-		log.Println("failed to create guest roles")
+	permissions = make([]*models.Permission, 0)
+	for resource := range guestRole {
+		actions := guestRole[resource]
+		for _, action := range actions {
+			code := fmt.Sprintf("%s:%s", resource, action)
+			perm := permissionMap[code]
+			permissions = append(permissions, perm)
+		}
 	}
+	CreateRole(db, string(utils.Guest), permissions, false)
 
 	return nil
 }
 
-func SetResourcePermissions(db *gorm.DB, role string, actions []string, resources []string) error {
+func CreatePermissions(db *gorm.DB, resource utils.Resource, actions []utils.Action) ([]*models.Permission, error) {
 	var permissions []*models.Permission
 	tx := db.Begin()
 	defer func() {
@@ -65,33 +89,37 @@ func SetResourcePermissions(db *gorm.DB, role string, actions []string, resource
 		}
 	}()
 	for _, action := range actions {
-		for _, resource := range resources {
-			code := fmt.Sprintf("%s:%s", resource, action)
-			var perm models.Permission
-			if err := db.Where("code = ?", code).First(&perm).Error; err == gorm.ErrRecordNotFound {
-				permission := &models.Permission{
-					Action:   action,
-					Resource: resource,
-					Code:     code,
-				}
-				err := tx.Create(permission).Error
-				if err != nil {
-					log.Printf("failed to create permission %s\n", code)
-					return err
-				}
-				permissions = append(permissions, permission)
+		code := fmt.Sprintf("%s:%s", resource, action)
+		var perm models.Permission
+		if err := db.Where("code = ?", code).First(&perm).Error; err == gorm.ErrRecordNotFound {
+			permission := &models.Permission{
+				Action:   string(action),
+				Resource: string(resource),
+				Code:     code,
 			}
+			err := tx.Create(permission).Error
+			if err != nil {
+				log.Printf("failed to create permission %s\n", code)
+				return nil, err
+			}
+			permissions = append(permissions, permission)
 		}
 	}
-	newRole := &models.Role{
-		Name:        role,
-		Permissions: permissions,
-	}
-	err := tx.Create(newRole).Error
-	if err != nil {
-		return err
-	}
 	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return permissions, nil
+}
+
+func CreateRole(db *gorm.DB, roleName string, permissions []*models.Permission, isDefault bool) error {
+	newRole := &models.Role{
+		Name:        roleName,
+		Permissions: permissions,
+		IsDefault:   isDefault,
+	}
+	err := db.Create(newRole).Error
+	if err != nil {
 		return err
 	}
 
