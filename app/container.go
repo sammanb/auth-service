@@ -14,6 +14,7 @@ type AppContainer struct {
 	DB            *gorm.DB
 	AuthHandler   *handlers.AuthHandler
 	TenantHandler *handlers.TenantHandler
+	InviteHandler *handlers.InviteHandler
 }
 
 func InitApp() *AppContainer {
@@ -23,6 +24,7 @@ func InitApp() *AppContainer {
 		&models.Tenant{},
 		&models.Role{},
 		&models.Permission{},
+		&models.Invitation{},
 	)
 
 	seed.SeedSuperAdmin(db)
@@ -36,9 +38,14 @@ func InitApp() *AppContainer {
 	tenantService := services.NewTenantSvc(tenantRepo)
 	tenantHandler := handlers.NewTenantHandler(tenantService)
 
+	inviteRepo := repository.NewInviteRepository(db)
+	inviteService := services.NewInviteService(inviteRepo)
+	inviteHandler := handlers.NewInviteHandler(*inviteService)
+
 	return &AppContainer{
 		DB:            db,
 		AuthHandler:   authHandler,
 		TenantHandler: tenantHandler,
+		InviteHandler: inviteHandler,
 	}
 }
