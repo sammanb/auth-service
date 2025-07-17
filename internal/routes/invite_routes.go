@@ -9,5 +9,6 @@ func RegisterInviteRoutes(group *gin.RouterGroup, inviteHandler *handlers.Invite
 	group.GET("/", inviteHandler.GetInvites)
 	group.POST("/", inviteHandler.CreateInvite)
 	group.DELETE("/", inviteHandler.RemoveInvite)
-	group.POST("/accept", inviteHandler.AcceptInvite)
+	group.PUT("/accept", inviteHandler.AcceptInvite)
+	group.POST("/resend", inviteHandler.ResendInvitation)
 }

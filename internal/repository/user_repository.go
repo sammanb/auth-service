@@ -10,7 +10,9 @@ import (
 
 type UserRepository interface {
 	CreateUser(user *models.User) error
+	CreateUserTx(tx *gorm.DB, user *models.User) error
 	FindUserByEmail(email string) (*models.User, error)
+	FindUserByEmailAndTenant(email string, tenant_id string) (*models.User, error)
 	RemoveUserById(id string) error
 	RemoveUserByEmail(email string, tenant_id string) error
 }
@@ -42,12 +44,24 @@ func (u *UserRepo) CreateUser(user *models.User) error {
 	return u.db.Create(user).Error
 }
 
+func (u *UserRepo) CreateUserTx(tx *gorm.DB, user *models.User) error {
+	return tx.Create(user).Error
+}
+
 func (u *UserRepo) FindUserByEmail(email string) (*models.User, error) {
 	var user models.User
 	if err := u.db.Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
 
+	return &user, nil
+}
+
+func (u *UserRepo) FindUserByEmailAndTenant(email string, tenant_id string) (*models.User, error) {
+	var user models.User
+	if err := u.db.Where("email = ? AND tenant_id = ?", email, tenant_id).First(&user).Error; err != nil {
+		return nil, err
+	}
 	return &user, nil
 }
 

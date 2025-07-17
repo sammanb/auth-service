@@ -45,15 +45,13 @@ func (i *InviteHandler) GetInvites(c *gin.Context) {
 	limitStr := c.Query("limit")
 
 	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err != nil || page <= 0 {
+		page = 1
 	}
 
 	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err != nil || limit <= 0 {
+		limit = 10
 	}
 
 	requestor := utils.GetCurrentUser(c)
@@ -66,6 +64,33 @@ func (i *InviteHandler) GetInvites(c *gin.Context) {
 	c.JSON(http.StatusOK, invitations)
 }
 
-func (i *InviteHandler) RemoveInvite(c *gin.Context) {}
+func (i *InviteHandler) RemoveInvite(c *gin.Context) {
+	inviteId := c.Query("id")
 
-func (i *InviteHandler) AcceptInvite(c *gin.Context) {}
+	err := i.inviteService.RemoveInvite(inviteId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "invite removed successfully"})
+}
+
+func (i *InviteHandler) AcceptInvite(c *gin.Context) {
+	var acceptInviteReq dto.AcceptInviteRequest
+
+	if err := c.ShouldBindJSON(&acceptInviteReq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := i.inviteService.AcceptInvite(acceptInviteReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (i *InviteHandler) ResendInvitation(c *gin.Context) {}

@@ -2,14 +2,13 @@ package utils
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/inflection"
 	"github.com/samvibes/vexop/auth-service/internal/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func GetCurrentUser(c *gin.Context) *models.User {
@@ -62,8 +61,16 @@ func GenerateInviteToken() (rawToken string, hashedToken string, err error) {
 	rawToken = base64.RawURLEncoding.EncodeToString(b)
 
 	// Hash the token
-	hash := sha256.Sum256([]byte(rawToken))
-	hashedToken = hex.EncodeToString(hash[:])
+	// hash := sha256.Sum256([]byte(rawToken))
+	// hashedToken = hex.EncodeToString(hash[:])
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(rawToken), bcrypt.DefaultCost)
+	if err != nil {
+		return
+	}
+
+	hashedToken = string(hashed)
+
 	err = nil
 
 	return

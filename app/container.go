@@ -39,7 +39,7 @@ func InitApp() *AppContainer {
 	tenantHandler := handlers.NewTenantHandler(tenantService)
 
 	inviteRepo := repository.NewInviteRepository(db)
-	inviteService := services.NewInviteService(inviteRepo)
+	inviteService := services.NewInviteService(inviteRepo, userRepo)
 	inviteHandler := handlers.NewInviteHandler(*inviteService)
 
 	return &AppContainer{
