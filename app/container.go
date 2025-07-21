@@ -15,6 +15,7 @@ type AppContainer struct {
 	AuthHandler   *handlers.AuthHandler
 	TenantHandler *handlers.TenantHandler
 	InviteHandler *handlers.InviteHandler
+	UserHandler   *handlers.UserHandler
 }
 
 func InitApp() *AppContainer {
@@ -42,10 +43,13 @@ func InitApp() *AppContainer {
 	inviteService := services.NewInviteService(inviteRepo, userRepo)
 	inviteHandler := handlers.NewInviteHandler(*inviteService)
 
+	userHandler := handlers.NewUserHandler(*userService)
+
 	return &AppContainer{
 		DB:            db,
 		AuthHandler:   authHandler,
 		TenantHandler: tenantHandler,
 		InviteHandler: inviteHandler,
+		UserHandler:   userHandler,
 	}
 }
