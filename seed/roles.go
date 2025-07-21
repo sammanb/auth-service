@@ -23,6 +23,7 @@ var adminRole = map[utils.Resource][]utils.Action{
 	utils.ResourceWorkspace: {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate, utils.ActionDelete},
 	utils.ResourceUser:      {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate, utils.ActionDelete},
 	utils.ResourceInvite:    {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate, utils.ActionDelete},
+	utils.ResourceRole:      {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate, utils.ActionDelete},
 }
 
 var memberRole = map[utils.Resource][]utils.Action{
@@ -30,6 +31,7 @@ var memberRole = map[utils.Resource][]utils.Action{
 	utils.ResourceWorkspace: {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate},
 	utils.ResourceUser:      {utils.ActionRead},
 	utils.ResourceInvite:    {utils.ActionRead, utils.ActionUpdate},
+	utils.ResourceRole:      {utils.ActionRead},
 }
 
 var guestRole = map[utils.Resource][]utils.Action{
@@ -37,6 +39,7 @@ var guestRole = map[utils.Resource][]utils.Action{
 	utils.ResourceWorkspace: {utils.ActionRead, utils.ActionCreate, utils.ActionUpdate},
 	utils.ResourceUser:      {utils.ActionRead},
 	utils.ResourceInvite:    {utils.ActionRead, utils.ActionUpdate},
+	utils.ResourceRole:      {},
 }
 
 func SeedRoles(db *gorm.DB) error {
