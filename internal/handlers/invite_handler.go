@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samvibes/vexop/auth-service/internal/dto"
@@ -30,29 +29,22 @@ func (i *InviteHandler) CreateInvite(c *gin.Context) {
 	requestor := utils.GetCurrentUser(c)
 	token, err := i.inviteService.CreateInvite(requestor, createInviteReq.Email, createInviteReq.Role, createInviteReq.TenantID)
 	if err != nil {
+		if appError, ok := err.(*utils.AppError); ok {
+			c.JSON(appError.Code, gin.H{"error": appError.Message})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// send token via email
+	// TODO: send token via email
 	fmt.Println(token)
 
 	c.JSON(http.StatusCreated, gin.H{"message": "invite sent"})
 }
 
 func (i *InviteHandler) GetInvites(c *gin.Context) {
-	pageStr := c.Query("page")
-	limitStr := c.Query("limit")
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page <= 0 {
-		page = 1
-	}
-
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 10
-	}
+	page, limit := utils.GetPageAndLimit(c)
 
 	requestor := utils.GetCurrentUser(c)
 	invitations, err := i.inviteService.GetInvites(requestor, page, limit)
@@ -69,6 +61,10 @@ func (i *InviteHandler) RemoveInvite(c *gin.Context) {
 
 	err := i.inviteService.RemoveInvite(inviteId)
 	if err != nil {
+		if appError, ok := err.(*utils.AppError); ok {
+			c.JSON(appError.Code, appError.Message)
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

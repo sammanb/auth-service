@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samvibes/vexop/auth-service/internal/dto"
@@ -19,8 +18,6 @@ func NewTenantHandler(service services.TenantSvcInterface) *TenantHandler {
 }
 
 func (h *TenantHandler) GetTenants(c *gin.Context) {
-	pageStr, _ := c.GetQuery("page")
-	limitStr, _ := c.GetQuery("limit")
 	idStr, _ := c.GetQuery("id")
 
 	if idStr != "" {
@@ -28,15 +25,7 @@ func (h *TenantHandler) GetTenants(c *gin.Context) {
 		return
 	}
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page <= 0 {
-		page = 1
-	}
-
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 10
-	}
+	page, limit := utils.GetPageAndLimit(c)
 
 	requestor := utils.GetCurrentUser(c)
 

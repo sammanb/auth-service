@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -52,7 +53,7 @@ func Singularize(word string) string {
 	// }
 }
 
-func GenerateInviteToken() (rawToken string, hashedToken string, err error) {
+func GenerateRandomToken() (rawToken string, hashedToken string, err error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", "", err
@@ -72,6 +73,25 @@ func GenerateInviteToken() (rawToken string, hashedToken string, err error) {
 	hashedToken = string(hashed)
 
 	err = nil
+
+	return
+}
+
+func GetPageAndLimit(c *gin.Context) (page, limit int) {
+	pageStr := c.Query("page")
+	limitStr := c.Query("limit")
+
+	var err error
+
+	page, err = strconv.Atoi(pageStr)
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
+	limit, err = strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
 
 	return
 }
