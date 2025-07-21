@@ -4,13 +4,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"gorm.io/gorm"
 )
 
 type InviteRepository interface {
 	CreateInvite(*models.Invitation) error
-	GetInvites(string, int, int) ([]*models.Invitation, error)
+	GetInvites(string, int, int) ([]*dto.InviteResponse, error)
 	GetInviteById(string) (*models.Invitation, error)
 	GetInviteByEmailTenant(string, string) (*models.Invitation, error)
 	RemoveInvite(string) error
@@ -32,13 +33,34 @@ func (i *InviteRepo) CreateInvite(invitation *models.Invitation) error {
 	return nil
 }
 
-func (i *InviteRepo) GetInvites(tenant_id string, page, limit int) ([]*models.Invitation, error) {
+func (i *InviteRepo) GetInvites(tenant_id string, page, limit int) ([]*dto.InviteResponse, error) {
 	var invitations []*models.Invitation
 	offset := (page - 1) * limit
-	if err := i.db.Where("tenant_id = ? AND accepted = ? AND expires_at > ?", tenant_id, false, time.Now()).Find(&invitations).Offset(offset).Limit(limit).Error; err != nil {
+	if err := i.db.Preload("Creator").Where("tenant_id = ? AND accepted = ? AND expires_at > ?", tenant_id, false, time.Now()).Find(&invitations).Offset(offset).Limit(limit).Error; err != nil {
 		return nil, err
 	}
-	return invitations, nil
+
+	var result []*dto.InviteResponse
+
+	for _, invite := range invitations {
+		creator := &dto.CreatorInfo{
+			Email: invite.Creator.Email,
+		}
+		_invite := &dto.InviteResponse{
+			ID:        invite.ID,
+			Email:     invite.Email,
+			TenantID:  invite.TenantID,
+			Role:      invite.Role,
+			Creator:   *creator,
+			ExpiresAt: invite.ExpiresAt,
+			Accepted:  invite.Accepted,
+			CreatedAt: invite.CreatedAt,
+			UpdatedAt: invite.UpdatedAt,
+		}
+		result = append(result, _invite)
+	}
+
+	return result, nil
 }
 
 func (i *InviteRepo) GetInviteById(invite_id string) (*models.Invitation, error) {
@@ -60,11 +82,12 @@ func (i *InviteRepo) GetInviteByEmailTenant(email, tenant_id string) (*models.In
 
 func (i *InviteRepo) RemoveInvite(inviteID string) error {
 	invite := models.Invitation{}
-	// check if invite exists
+
 	if err := i.db.Where("id = ?", inviteID).First(&invite).Error; err != nil {
 		return err
 	}
-	if err := i.db.Delete(invite).Error; err != nil {
+
+	if err := i.db.Delete(&invite).Error; err != nil {
 		return err
 	}
 
