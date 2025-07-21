@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,7 +32,15 @@ func NewInviteService(inviteRepo repository.InviteRepository, userRepo repositor
 }
 
 func (i *InviteService) CreateInvite(requestor *models.User, email, role string, tenant_id uuid.UUID) (string, error) {
-	token, hashedToken, err := utils.GenerateInviteToken()
+
+	existing_invite, _ := i.inviteRepo.GetInviteByEmailTenant(email, tenant_id.String())
+
+	if existing_invite != nil {
+		err := utils.NewAppError(http.StatusConflict, "invite already exists")
+		return "", err
+	}
+
+	token, hashedToken, err := utils.GenerateRandomToken()
 	if err != nil {
 		return "", err
 	}
@@ -52,12 +61,22 @@ func (i *InviteService) CreateInvite(requestor *models.User, email, role string,
 	return token, nil
 }
 
-func (i *InviteService) GetInvites(requestor *models.User, page, limit int) ([]*models.Invitation, error) {
+func (i *InviteService) GetInvites(requestor *models.User, page, limit int) ([]*dto.InviteResponse, error) {
 	return i.inviteRepo.GetInvites(requestor.TenantID.String(), page, limit)
 }
 
 func (i *InviteService) RemoveInvite(invite_id string) error {
-	return i.inviteRepo.RemoveInvite(invite_id)
+	if _, err := uuid.Parse(invite_id); err != nil {
+		appError := utils.NewAppError(http.StatusBadRequest, "invalid invite id")
+		return appError
+	}
+
+	err := i.inviteRepo.RemoveInvite(invite_id)
+	if err == gorm.ErrRecordNotFound {
+		appError := utils.NewAppError(http.StatusNotFound, "invite not found")
+		return appError
+	}
+	return err
 }
 
 func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest) error {
@@ -66,29 +85,39 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest) er
 	token := acceptInviteReq.Token
 	tenant_id := acceptInviteReq.TenantID
 
+	var appError *utils.AppError
+
 	invite, err := i.inviteRepo.GetInviteByEmailTenant(email, tenant_id)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			appError = utils.NewAppError(http.StatusNotFound, "no invite found for email")
+			return appError
+		}
 		return err
 	}
 
 	if invite == nil {
-		return errors.New("invite expired or deleted")
+		appError = utils.NewAppError(http.StatusNotFound, "invite expired or deleted")
+		return appError
 	}
 
 	if invite.Accepted {
-		return errors.New("invite already accepted")
+		appError = utils.NewAppError(http.StatusBadRequest, "invite already accepted")
+		return appError
 	}
 
 	// check if token matches invite's hashedtoken
 	hashedToken := invite.TokenHash
 	err = bcrypt.CompareHashAndPassword([]byte(hashedToken), []byte(token))
 	if err != nil {
-		return errors.New("incorrect token")
+		appError = utils.NewAppError(http.StatusBadRequest, "incorrect token")
+		return appError
 	}
 
 	user, _ := i.userRepo.FindUserByEmailAndTenant(email, tenant_id)
 	if user != nil {
-		return errors.New("user already exists")
+		appError = utils.NewAppError(http.StatusBadRequest, "user already exists")
+		return appError
 	}
 
 	tenantID, err := uuid.Parse(tenant_id)
@@ -99,7 +128,8 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest) er
 	// get role
 	var role models.Role
 	if err := config.DB.Where("name = ?", invite.Role).First(&role).Error; err != nil {
-		return err
+		appError = utils.NewAppError(http.StatusBadRequest, "invalid role")
+		return appError
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -141,6 +171,6 @@ func (i *InviteService) ResendInvite(invite_id string) error {
 	if err != nil {
 		return err
 	}
-	// send mail
+	// TODO: send mail
 	return nil
 }
