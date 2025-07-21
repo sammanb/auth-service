@@ -27,5 +27,8 @@ func InitRoutes(container *app.AppContainer) *gin.Engine {
 	user_api := router.Group("/api/users")
 	RegisterUserRoutes(user_api, container.UserHandler)
 
+	role_api := router.Group("/api/roles")
+	RegisterRoleRoutes(role_api, *container.RoleHandler)
+
 	return router
 }
