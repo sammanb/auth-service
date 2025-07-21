@@ -17,7 +17,6 @@ type UserHandlerInterface interface {
 	SendResetPassword(*gin.Context)
 	ResetPassword(*gin.Context)
 	DeleteUser(c *gin.Context)
-	GetRoles(*gin.Context)
 }
 
 type UserHandler struct {
@@ -145,19 +144,4 @@ func (u *UserHandler) ResetPassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "password updated successfully"})
-}
-
-func (u *UserHandler) GetRoles(c *gin.Context) {
-	user := utils.GetCurrentUser(c)
-
-	page, limit := utils.GetPageAndLimit(c)
-
-	roles, err := u.userService.GetRoles(user.TenantID.String(), page, limit)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error fetching roles"})
-		return
-	}
-
-	c.JSON(http.StatusOK, roles)
 }

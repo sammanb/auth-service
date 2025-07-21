@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/repository"
 	"github.com/samvibes/vexop/auth-service/internal/utils"
@@ -14,6 +13,7 @@ import (
 
 type UserService struct {
 	userRepo repository.UserRepository
+	roleRepo repository.RoleRepo
 }
 
 func NewUserService(repo repository.UserRepository) *UserService {
@@ -130,7 +130,7 @@ func (u *UserService) GetUserById(tenant_id, user_id string) (*models.User, erro
 }
 
 func (u *UserService) UpdateUserRole(tenant_id, user_id, role_name string) error {
-	role, err := u.userRepo.GetRoleByName(tenant_id, role_name)
+	role, err := u.roleRepo.GetRoleByName(tenant_id, role_name)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			appError := utils.NewAppError(http.StatusNotFound, "role not found")
@@ -152,8 +152,4 @@ func (u *UserService) UpdateUserRole(tenant_id, user_id, role_name string) error
 	user.RoleID = role.ID.String()
 
 	return u.userRepo.UpdateUser(user)
-}
-
-func (u *UserService) GetRoles(tenant_id string, page, limit int) ([]*dto.RoleResponse, error) {
-	return u.userRepo.GetRoles(tenant_id, page, limit)
 }

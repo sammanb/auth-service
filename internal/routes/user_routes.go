@@ -10,7 +10,6 @@ func RegisterUserRoutes(router *gin.RouterGroup, userHandler handlers.UserHandle
 	router.POST("/password/reset", userHandler.ResetPassword)
 	router.GET("/", userHandler.GetUsers)
 	router.GET("/:id", userHandler.GetUserById)
-	router.GET("/roles", userHandler.GetRoles)
 	router.PUT("/role", userHandler.UpdateUserRole)
 	router.DELETE("/:id", userHandler.DeleteUser)
 }
