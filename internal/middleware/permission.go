@@ -24,13 +24,7 @@ func requirePermission(action, resource string) gin.HandlerFunc {
 	code := fmt.Sprintf("%s:%s", action, resource)
 
 	return func(c *gin.Context) {
-		userVar, exists := c.Get(utils.UserContextKey)
-		if !exists {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-
-		user := userVar.(models.User)
+		user := GetCurrentUser(c)
 
 		if err := config.DB.Preload("Role.Permissions").First(&user, "id = ?", user.ID).Error; err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "failed to load user role"})
@@ -49,12 +43,7 @@ func requirePermission(action, resource string) gin.HandlerFunc {
 }
 
 func hasPermission(c *gin.Context, action, resource string) bool {
-	userVar, exists := c.Get(utils.UserContextKey)
-	if !exists {
-		return false
-	}
-
-	user := userVar.(models.User)
+	user := GetCurrentUser(c)
 
 	if strings.ToLower(user.Role.Name) == "superadmin" {
 		return true
