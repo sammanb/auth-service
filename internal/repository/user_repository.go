@@ -40,7 +40,7 @@ func (u *UserRepo) CreateUser(user *models.User) error {
 	var tenant models.Tenant
 	err = u.db.Where("id = ?", user.TenantID).First(&tenant).Error
 	if err != nil {
-		return errors.New("tenant " + err.Error())
+		return errors.New("tenant: " + err.Error())
 	}
 	user.ID = uuid.New()
 	user.Role = role

@@ -25,7 +25,11 @@ func (u *UserService) FindUserByEmail(email string) (*models.User, error) {
 }
 
 func (u *UserService) CreateUser(user *models.User) error {
-	return u.userRepo.CreateUser(user)
+	err := u.userRepo.CreateUser(user)
+	if utils.UniqueViolation(err) {
+		return utils.NewAppError(http.StatusBadRequest, "user already exists")
+	}
+	return err
 }
 
 func (u *UserService) Login(email, password string) (string, error) {
@@ -46,7 +50,7 @@ func (u *UserService) Login(email, password string) (string, error) {
 
 func (u *UserService) RemoveUserById(tenant_id, user_id string) error {
 	if err := u.userRepo.RemoveUserById(tenant_id, user_id); err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError := utils.NewAppError(http.StatusNotFound, "user not found")
 			return appError
 		}
@@ -58,7 +62,7 @@ func (u *UserService) RemoveUserById(tenant_id, user_id string) error {
 
 func (u *UserService) RemoveUserByEmail(email string, tenant_id string) error {
 	if err := u.userRepo.RemoveUserByEmail(email, tenant_id); err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError := utils.NewAppError(http.StatusNotFound, "user not found")
 			return appError
 		}
@@ -91,7 +95,7 @@ func (u *UserService) InitResetPassword(email string) (string, error) {
 func (u *UserService) ResetPassword(tenant_id, user_id, token, password string) error {
 	user, err := u.userRepo.GetUserById(tenant_id, user_id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appErr := utils.NewAppError(http.StatusNotFound, "user not found")
 			return appErr
 		}
@@ -132,7 +136,7 @@ func (u *UserService) GetUserById(tenant_id, user_id string) (*models.User, erro
 func (u *UserService) UpdateUserRole(tenant_id, user_id, role_name string) error {
 	role, err := u.roleRepo.GetRoleByName(tenant_id, role_name)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError := utils.NewAppError(http.StatusNotFound, "role not found")
 			return appError
 		}
@@ -141,7 +145,7 @@ func (u *UserService) UpdateUserRole(tenant_id, user_id, role_name string) error
 
 	user, err := u.userRepo.GetUserById(tenant_id, user_id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError := utils.NewAppError(http.StatusNotFound, "user not found")
 			return appError
 		}

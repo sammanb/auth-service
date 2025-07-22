@@ -72,7 +72,7 @@ func (i *InviteService) RemoveInvite(invite_id string) error {
 	}
 
 	err := i.inviteRepo.RemoveInvite(invite_id)
-	if err == gorm.ErrRecordNotFound {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		appError := utils.NewAppError(http.StatusNotFound, "invite not found")
 		return appError
 	}
@@ -89,7 +89,7 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest) er
 
 	invite, err := i.inviteRepo.GetInviteByEmailTenant(email, tenant_id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError = utils.NewAppError(http.StatusNotFound, "no invite found for email")
 			return appError
 		}
