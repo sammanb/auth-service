@@ -32,8 +32,14 @@ func InitApp() *AppContainer {
 	seed.SeedSuperAdmin(db)
 	seed.SeedRoles(db)
 
+	roleRepo := repository.NewRoleRepository(db)
+	roleService := services.NewRoleService(roleRepo)
+	roleHandler := handlers.NewRoleHandler(*roleService)
+
+	permissionRepo := repository.NewPermissionRepository(db)
+
 	userRepo := repository.NewUserRepository(db)
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, roleRepo, permissionRepo)
 	authHandler := handlers.NewAuthHandler(*userService)
 
 	tenantRepo := repository.NewTenantRepo(db)
@@ -41,14 +47,10 @@ func InitApp() *AppContainer {
 	tenantHandler := handlers.NewTenantHandler(tenantService)
 
 	inviteRepo := repository.NewInviteRepository(db)
-	inviteService := services.NewInviteService(inviteRepo, userRepo)
+	inviteService := services.NewInviteService(inviteRepo, userRepo, roleRepo)
 	inviteHandler := handlers.NewInviteHandler(*inviteService)
 
 	userHandler := handlers.NewUserHandler(*userService)
-
-	roleRepo := repository.NewRoleRepository(db)
-	roleService := services.NewRoleService(roleRepo)
-	roleHandler := handlers.NewRoleHandler(*roleService)
 
 	return &AppContainer{
 		DB:            db,
