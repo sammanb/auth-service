@@ -106,7 +106,7 @@ func (u *UserRepo) SetResetPasswordTokenHash(id, tokenHash string) error {
 func (u *UserRepo) GetUsers(tenant_id string, page, limit int) ([]*models.User, error) {
 	offset := (page - 1) * limit
 	var users []*models.User
-	if err := u.db.Where("tenant_id = ?", tenant_id).Offset(offset).Limit(limit).Find(&users).Error; err != nil {
+	if err := u.db.Preload("Role").Preload("Role.Permissions").Where("tenant_id = ?", tenant_id).Offset(offset).Limit(limit).Find(&users).Error; err != nil {
 		return nil, err
 	}
 
