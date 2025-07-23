@@ -15,7 +15,7 @@ type User struct {
 	RoleID                 string     `json:"role_id"`
 	Role                   Role       `gorm:"foreignKey:RoleID" json:"role"`
 	IsOwner                bool       `gorm:"not null;default:false" json:"is_owner"`
-	ResetPasswordTokenHash string     `json:"reset_password_token_hash"`
+	ResetPasswordTokenHash string     `json:"-"`
 
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
