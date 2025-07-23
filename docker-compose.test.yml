@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  test-postgres:
+    image: postgres:latest
+    container_name: auth_service_test_db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
