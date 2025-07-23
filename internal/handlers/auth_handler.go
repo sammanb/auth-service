@@ -49,6 +49,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 	}
 
 	user := &models.User{
+		ID:           uuid.New(),
 		TenantID:     &tenantID,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
