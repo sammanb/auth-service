@@ -17,6 +17,7 @@ type RoleRepository interface {
 	AddRolePermission(tenant_id, id string, permission *models.Permission) error
 	RemoveRolePermission(tenant_id, id string, permission *models.Permission) error
 	UpdateRolePermissions(role *models.Role) error
+	CopyRolesTx(tx *gorm.DB, tenant_id string, permissionMap *utils.PermissionMap) ([]*models.Role, error)
 }
 
 type RoleRepo struct {
@@ -29,7 +30,7 @@ func NewRoleRepository(db *gorm.DB) *RoleRepo {
 
 func (r *RoleRepo) GetRoleByName(tenant_id, role_name string) (*models.Role, error) {
 	var role models.Role
-	if err := r.db.Where("tenant_id = ? AND id = ?", tenant_id, role_name).First(&role).Error; err != nil {
+	if err := r.db.Where("tenant_id = ? AND name = ?", tenant_id, role_name).First(&role).Error; err != nil {
 		return nil, err
 	}
 	return &role, nil
@@ -95,4 +96,38 @@ func (r *RoleRepo) RemoveRolePermission(tenant_id, id string, permission *models
 
 func (r *RoleRepo) UpdateRolePermissions(role *models.Role) error {
 	return nil
+}
+
+func (r *RoleRepo) CopyRolesTx(tx *gorm.DB, tenant_id string, permissionMap *utils.PermissionMap) ([]*models.Role, error) {
+	var roles []*models.Role
+	if err := r.db.Preload("Permissions").Where("tenant_id IS NULL AND Name != ?", utils.RoleSuperAdmin).Find(&roles).Error; err != nil {
+		return nil, err
+	}
+	tenantUUID, err := uuid.Parse(tenant_id)
+	if err != nil {
+		return nil, err
+	}
+	var newRoles []*models.Role
+	for _, role := range roles {
+		oldPermissions := role.Permissions
+		var newPermissions []*models.Permission
+		for _, oldPerm := range oldPermissions {
+			newPermissions = append(newPermissions, (*permissionMap)[oldPerm.ID])
+		}
+		id := uuid.New()
+		newRole := &models.Role{
+			ID:          id,
+			TenantID:    &tenantUUID,
+			Name:        role.Name,
+			IsDefault:   role.IsDefault,
+			Permissions: newPermissions,
+		}
+		newRoles = append(newRoles, newRole)
+	}
+
+	if err := tx.Create(&newRoles).Error; err != nil {
+		return nil, err
+	}
+
+	return newRoles, nil
 }
