@@ -12,8 +12,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var DB *gorm.DB
-
 func loadEnv() error {
 	viper.SetConfigName(".env") // file name without extension if you use SetConfigName
 	viper.SetConfigType("env")  // tell Viper it's an env file
@@ -79,8 +77,6 @@ func InitDB() *gorm.DB {
 	if err != nil {
 		log.Fatalf("failed to connect to DB: %v", err)
 	}
-
-	DB = db
 
 	return db
 }
