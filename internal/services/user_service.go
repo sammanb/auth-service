@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/samvibes/vexop/auth-service/config"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/repository"
 	"github.com/samvibes/vexop/auth-service/internal/utils"
@@ -30,8 +29,8 @@ func (u *UserService) FindUserByEmail(email string) (*models.User, error) {
 	return u.userRepo.FindUserByEmail(email)
 }
 
-func (u *UserService) CreateUser(user *models.User) error {
-	err := config.DB.Transaction(func(tx *gorm.DB) error {
+func (u *UserService) CreateUser(user *models.User, db *gorm.DB) error {
+	err := db.Transaction(func(tx *gorm.DB) error {
 		// copy roles and permissions with this user's tenant id
 		permissionMap, err := u.permissionsRepo.CopyPermissionsTx(tx, user.TenantID.String())
 		if err != nil {
@@ -94,8 +93,8 @@ func (u *UserService) RemoveUserById(tenant_id, user_id string) error {
 	return nil
 }
 
-func (u *UserService) RemoveUserByEmail(email string, tenant_id string) error {
-	if err := u.userRepo.RemoveUserByEmail(email, tenant_id); err != nil {
+func (u *UserService) RemoveUserByEmail(tenant_id string, email string) error {
+	if err := u.userRepo.RemoveUserByEmail(tenant_id, email); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError := utils.NewAppError(http.StatusNotFound, "user not found")
 			return appError

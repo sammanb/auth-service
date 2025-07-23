@@ -8,14 +8,16 @@ import (
 	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/services"
 	"github.com/samvibes/vexop/auth-service/internal/utils"
+	"gorm.io/gorm"
 )
 
 type InviteHandler struct {
 	inviteService services.InviteService
+	db            *gorm.DB
 }
 
-func NewInviteHandler(inviteService services.InviteService) *InviteHandler {
-	return &InviteHandler{inviteService: inviteService}
+func NewInviteHandler(inviteService services.InviteService, db *gorm.DB) *InviteHandler {
+	return &InviteHandler{inviteService: inviteService, db: db}
 }
 
 func (i *InviteHandler) CreateInvite(c *gin.Context) {
@@ -80,7 +82,7 @@ func (i *InviteHandler) AcceptInvite(c *gin.Context) {
 		return
 	}
 
-	err := i.inviteService.AcceptInvite(acceptInviteReq)
+	err := i.inviteService.AcceptInvite(acceptInviteReq, i.db)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

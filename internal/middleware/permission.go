@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/samvibes/vexop/auth-service/config"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/utils"
+	"gorm.io/gorm"
 )
 
 func GetCurrentUser(c *gin.Context) *models.User {
@@ -20,13 +20,13 @@ func GetCurrentUser(c *gin.Context) *models.User {
 	return &user
 }
 
-func requirePermission(action, resource string) gin.HandlerFunc {
+func requirePermission(action, resource string, db *gorm.DB) gin.HandlerFunc {
 	code := fmt.Sprintf("%s:%s", action, resource)
 
 	return func(c *gin.Context) {
 		user := GetCurrentUser(c)
 
-		if err := config.DB.Preload("Role.Permissions").First(&user, "id = ?", user.ID).Error; err != nil {
+		if err := db.Preload("Role.Permissions").First(&user, "id = ?", user.ID).Error; err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "failed to load user role"})
 			return
 		}
@@ -42,7 +42,7 @@ func requirePermission(action, resource string) gin.HandlerFunc {
 	}
 }
 
-func hasPermission(c *gin.Context, action, resource string) bool {
+func hasPermission(c *gin.Context, action, resource string, db *gorm.DB) bool {
 	user := GetCurrentUser(c)
 
 	if strings.ToLower(user.Role.Name) == "superadmin" {
@@ -51,7 +51,7 @@ func hasPermission(c *gin.Context, action, resource string) bool {
 
 	// preload permissions if not already done
 	if len(user.Role.Permissions) == 0 {
-		config.DB.Preload("Role.Permissions").First(&user, "id = ?", user.ID)
+		db.Preload("Role.Permissions").First(&user, "id = ?", user.ID)
 	}
 
 	code := fmt.Sprintf("%s:%s", resource, action)
@@ -75,7 +75,7 @@ func extractResource(c *gin.Context) string {
 	return ""
 }
 
-func AutoRBAC() gin.HandlerFunc {
+func AutoRBAC(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestor := GetCurrentUser(c)
 		if requestor == nil {
@@ -90,7 +90,7 @@ func AutoRBAC() gin.HandlerFunc {
 			return
 		}
 
-		if !hasPermission(c, action, resource) {
+		if !hasPermission(c, action, resource, db) {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "access denied"})
 			return
 		}

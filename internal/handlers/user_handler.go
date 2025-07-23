@@ -8,6 +8,7 @@ import (
 	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/services"
 	"github.com/samvibes/vexop/auth-service/internal/utils"
+	"gorm.io/gorm"
 )
 
 type UserHandlerInterface interface {
@@ -21,10 +22,11 @@ type UserHandlerInterface interface {
 
 type UserHandler struct {
 	userService services.UserService
+	db          *gorm.DB
 }
 
-func NewUserHandler(userService services.UserService) *UserHandler {
-	return &UserHandler{userService: userService}
+func NewUserHandler(userService services.UserService, db *gorm.DB) *UserHandler {
+	return &UserHandler{userService: userService, db: db}
 }
 
 func (u *UserHandler) GetUsers(c *gin.Context) {

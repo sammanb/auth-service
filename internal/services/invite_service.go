@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samvibes/vexop/auth-service/config"
 	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/repository"
@@ -86,7 +85,7 @@ func (i *InviteService) RemoveInvite(invite_id string) error {
 	return err
 }
 
-func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest) error {
+func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest, db *gorm.DB) error {
 	email := acceptInviteReq.Email
 	password := acceptInviteReq.Password
 	token := acceptInviteReq.Token
@@ -134,7 +133,7 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest) er
 
 	// get role
 	var role models.Role
-	if err := config.DB.Where("name = ?", invite.Role).First(&role).Error; err != nil {
+	if err := db.Where("name = ?", invite.Role).First(&role).Error; err != nil {
 		appError = utils.NewAppError(http.StatusBadRequest, "invalid role")
 		return appError
 	}
@@ -152,7 +151,7 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest) er
 		PasswordHash: string(hashedPassword),
 	}
 
-	err = config.DB.Transaction(func(tx *gorm.DB) error {
+	err = db.Transaction(func(tx *gorm.DB) error {
 		err := i.userRepo.CreateUserTx(tx, user)
 		if err != nil {
 			return errors.New("failed to create user: " + err.Error())

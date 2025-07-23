@@ -8,6 +8,7 @@ import (
 	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/services"
+	"gorm.io/gorm"
 )
 
 type AuthInterface interface {
@@ -18,10 +19,11 @@ type AuthInterface interface {
 
 type AuthHandler struct {
 	userService services.UserService
+	db          *gorm.DB
 }
 
-func NewAuthHandler(userService services.UserService) *AuthHandler {
-	return &AuthHandler{userService}
+func NewAuthHandler(userService services.UserService, db *gorm.DB) *AuthHandler {
+	return &AuthHandler{userService, db}
 }
 
 func (h *AuthHandler) Health(c *gin.Context) {
@@ -55,7 +57,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		PasswordHash: hashedPassword,
 	}
 
-	if err := h.userService.CreateUser(user); err != nil {
+	if err := h.userService.CreateUser(user, h.db); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user: " + err.Error()})
 		return
 	}

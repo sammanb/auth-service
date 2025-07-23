@@ -40,7 +40,7 @@ func InitApp() *AppContainer {
 
 	userRepo := repository.NewUserRepository(db)
 	userService := services.NewUserService(userRepo, roleRepo, permissionRepo)
-	authHandler := handlers.NewAuthHandler(*userService)
+	authHandler := handlers.NewAuthHandler(*userService, db)
 
 	tenantRepo := repository.NewTenantRepo(db)
 	tenantService := services.NewTenantSvc(tenantRepo)
@@ -48,9 +48,9 @@ func InitApp() *AppContainer {
 
 	inviteRepo := repository.NewInviteRepository(db)
 	inviteService := services.NewInviteService(inviteRepo, userRepo, roleRepo)
-	inviteHandler := handlers.NewInviteHandler(*inviteService)
+	inviteHandler := handlers.NewInviteHandler(*inviteService, db)
 
-	userHandler := handlers.NewUserHandler(*userService)
+	userHandler := handlers.NewUserHandler(*userService, db)
 
 	return &AppContainer{
 		DB:            db,

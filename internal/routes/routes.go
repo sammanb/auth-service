@@ -15,7 +15,7 @@ func InitRoutes(container *app.AppContainer) *gin.Engine {
 	RegisterAPIRoutes(auth_api, container.AuthHandler)
 
 	router.Use(middleware.JWTAuthMiddleware(container.DB, jwtSecret))
-	router.Use(middleware.AutoRBAC())
+	router.Use(middleware.AutoRBAC(container.DB))
 
 	// Super admin APIs
 	sa_api := router.Group("/api/sa")
