@@ -51,6 +51,13 @@ func SeedRoles(db *gorm.DB) error {
 		if err != nil {
 			log.Printf("failed to create admin role for %s\n", resource)
 		}
+		if _permissions == nil {
+			var existingPermissions []*models.Permission
+			if err := db.Where("tenant_id IS NULL").Find(&existingPermissions).Error; err != nil {
+				return err
+			}
+			_permissions = append(_permissions, existingPermissions...)
+		}
 		permissions = append(permissions, _permissions...)
 		for _, perm := range permissions {
 			permissionMap[perm.Code] = perm
