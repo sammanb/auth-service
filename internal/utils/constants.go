@@ -13,6 +13,8 @@ var (
 	ActionDelete Action = "delete"
 )
 
+var RoleSuperAdmin = "superadmin"
+
 type Role string
 
 var (

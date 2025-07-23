@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/services"
+	"github.com/samvibes/vexop/auth-service/internal/utils"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
@@ -33,7 +34,7 @@ func SeedSuperAdmin(db *gorm.DB) {
 	}
 
 	superadminRole := models.Role{
-		Name:        models.RoleSuperAdmin,
+		Name:        utils.RoleSuperAdmin,
 		Permissions: []*models.Permission{},
 	}
 	db.Create(&superadminRole)
