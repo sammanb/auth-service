@@ -15,7 +15,7 @@ type InviteRepository interface {
 	GetInviteById(string) (*models.Invitation, error)
 	GetInviteByEmailTenant(string, string) (*models.Invitation, error)
 	RemoveInvite(string) error
-	AcceptInvite(tx *gorm.DB, inviteID uuid.UUID) error
+	AcceptInviteTx(tx *gorm.DB, inviteID uuid.UUID) error
 }
 
 type InviteRepo struct {
@@ -94,6 +94,6 @@ func (i *InviteRepo) RemoveInvite(inviteID string) error {
 	return nil
 }
 
-func (i *InviteRepo) AcceptInvite(tx *gorm.DB, inviteID uuid.UUID) error {
+func (i *InviteRepo) AcceptInviteTx(tx *gorm.DB, inviteID uuid.UUID) error {
 	return tx.Model(&models.Invitation{}).Where("id = ?", inviteID).Update("accepted", true).Error
 }

@@ -25,10 +25,11 @@ type InviteServiceInterface interface {
 type InviteService struct {
 	inviteRepo repository.InviteRepository
 	userRepo   repository.UserRepository
+	roleRepo   repository.RoleRepository
 }
 
-func NewInviteService(inviteRepo repository.InviteRepository, userRepo repository.UserRepository) *InviteService {
-	return &InviteService{inviteRepo: inviteRepo, userRepo: userRepo}
+func NewInviteService(inviteRepo repository.InviteRepository, userRepo repository.UserRepository, roleRepo repository.RoleRepository) *InviteService {
+	return &InviteService{inviteRepo: inviteRepo, userRepo: userRepo, roleRepo: roleRepo}
 }
 
 func (i *InviteService) CreateInvite(requestor *models.User, email, role string, tenant_id uuid.UUID) (string, error) {
@@ -44,6 +45,12 @@ func (i *InviteService) CreateInvite(requestor *models.User, email, role string,
 	if err != nil {
 		return "", err
 	}
+
+	_, err = i.roleRepo.GetRoleByName(tenant_id.String(), role)
+	if err != nil {
+		return "", utils.NewAppError(http.StatusBadRequest, "invalid role name")
+	}
+
 	invite := &models.Invitation{
 		Email:     email,
 		TenantID:  tenant_id,
@@ -151,7 +158,7 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest) er
 			return errors.New("failed to create user: " + err.Error())
 		}
 
-		err = i.inviteRepo.AcceptInvite(tx, invite.ID)
+		err = i.inviteRepo.AcceptInviteTx(tx, invite.ID)
 		if err != nil {
 			return errors.New("failed to accept invite: " + err.Error())
 		}
