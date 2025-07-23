@@ -14,7 +14,7 @@ type UserRepository interface {
 	FindUserByEmail(email string) (*models.User, error)
 	FindUserByEmailAndTenant(email string, tenant_id string) (*models.User, error)
 	RemoveUserById(tenant_id, user_id string) error
-	RemoveUserByEmail(email string, tenant_id string) error
+	RemoveUserByEmail(tenant_id string, email string) error
 	SetResetPasswordTokenHash(id, tokenHash string) error
 	GetUsers(tenant_id string, page, limit int) ([]*models.User, error)
 	GetUserById(tenant_id, user_id string) (*models.User, error)
@@ -70,25 +70,15 @@ func (u *UserRepo) FindUserByEmailAndTenant(email string, tenant_id string) (*mo
 }
 
 func (u *UserRepo) RemoveUserById(tenant_id, user_id string) error {
-	var user models.User
-	if err := u.db.Where("tenant_id = ? AND id = ?", tenant_id, user_id).First(&user).Error; err != nil {
-		return err
-	}
-
-	if err := u.db.Delete(user).Error; err != nil {
+	if err := u.db.Where("tenant_id = ? AND id = ?", tenant_id, user_id).Delete(&models.User{}).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (u *UserRepo) RemoveUserByEmail(id string, tenant_id string) error {
-	var user models.User
-	if err := u.db.Where("id = ? AND tenant_id = ?", id, tenant_id).First(&user).Error; err != nil {
-		return err
-	}
-
-	if err := u.db.Delete(user).Error; err != nil {
+func (u *UserRepo) RemoveUserByEmail(tenant_id string, email string) error {
+	if err := u.db.Where("email = ? AND tenant_id = ?", email, tenant_id).Delete(&models.User{}).Error; err != nil {
 		return err
 	}
 
