@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/samvibes/vexop/auth-service/config"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"github.com/samvibes/vexop/auth-service/internal/repository"
 	"github.com/samvibes/vexop/auth-service/internal/utils"
@@ -12,12 +13,17 @@ import (
 )
 
 type UserService struct {
-	userRepo repository.UserRepository
-	roleRepo repository.RoleRepo
+	userRepo        repository.UserRepository
+	roleRepo        repository.RoleRepository
+	permissionsRepo repository.PermissionRepository
 }
 
-func NewUserService(repo repository.UserRepository) *UserService {
-	return &UserService{userRepo: repo}
+func NewUserService(
+	repo repository.UserRepository,
+	role repository.RoleRepository,
+	permission repository.PermissionRepository,
+) *UserService {
+	return &UserService{userRepo: repo, roleRepo: role, permissionsRepo: permission}
 }
 
 func (u *UserService) FindUserByEmail(email string) (*models.User, error) {
@@ -25,10 +31,38 @@ func (u *UserService) FindUserByEmail(email string) (*models.User, error) {
 }
 
 func (u *UserService) CreateUser(user *models.User) error {
-	err := u.userRepo.CreateUser(user)
-	if utils.UniqueViolation(err) {
-		return utils.NewAppError(http.StatusBadRequest, "user already exists")
-	}
+	err := config.DB.Transaction(func(tx *gorm.DB) error {
+		// copy roles and permissions with this user's tenant id
+		permissionMap, err := u.permissionsRepo.CopyPermissionsTx(tx, user.TenantID.String())
+		if err != nil {
+			return err
+		}
+		roles, err := u.roleRepo.CopyRolesTx(tx, user.TenantID.String(), &permissionMap)
+		if err != nil {
+			return err
+		}
+
+		var defaultRole *models.Role
+		for _, role := range roles {
+			if role.IsDefault {
+				defaultRole = role
+				break
+			}
+		}
+
+		user.Role = *defaultRole
+		user.RoleID = defaultRole.ID.String()
+		err = u.userRepo.CreateUserTx(tx, user)
+		if utils.UniqueViolation(err) {
+			return utils.NewAppError(http.StatusBadRequest, "user already exists")
+		}
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	return err
 }
 
