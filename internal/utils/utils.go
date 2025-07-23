@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jinzhu/inflection"
 	"github.com/samvibes/vexop/auth-service/internal/models"
 	"golang.org/x/crypto/bcrypt"
@@ -94,4 +95,12 @@ func GetPageAndLimit(c *gin.Context) (page, limit int) {
 	}
 
 	return
+}
+
+func Keys(m map[uuid.UUID]uuid.UUID) []uuid.UUID {
+	var keys []uuid.UUID
+	for key := range m {
+		keys = append(keys, key)
+	}
+	return keys
 }
