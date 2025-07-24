@@ -114,7 +114,7 @@ func (u *UserService) InitResetPassword(email string) (string, error) {
 	}
 
 	// generate token to send back
-	token, hashToken, err := utils.GenerateRandomToken()
+	token, hashToken, err := utils.CreateRandomToken()
 	if err != nil {
 		return "", fmt.Errorf("error while generating token %s", err.Error())
 	}

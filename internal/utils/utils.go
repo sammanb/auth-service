@@ -13,6 +13,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var CreateRandomToken = GenerateRandomToken
+
 func GetCurrentUser(c *gin.Context) *models.User {
 	userVar, exists := c.Get(UserContextKey)
 	if !exists {
