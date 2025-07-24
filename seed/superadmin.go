@@ -27,7 +27,9 @@ func SeedSuperAdmin(db *gorm.DB) {
 		return
 	}
 
-	hashed, err := services.HashPassword(password)
+	authService := services.NewAuthService()
+
+	hashed, err := authService.HashPassword(password)
 	if err != nil {
 		log.Println("Superadmin password hash error. Skipping seed")
 		return
