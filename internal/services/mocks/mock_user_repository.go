@@ -77,9 +77,11 @@ func (m *MockUserRepository) GetUsers(tenant_id string, page int, limit int) ([]
 func (m *MockUserRepository) GetUserById(tenant_id, user_id string) (*models.User, error) {
 	args := m.Called(tenant_id, user_id)
 
-	user := &models.User{Email: "test_user@mail.com"}
+	if user, ok := args.Get(0).(*models.User); ok {
+		return user, args.Error(1)
+	}
 
-	return user, args.Error(0)
+	return nil, args.Error(1)
 }
 
 func (m *MockUserRepository) UpdateUser(user *models.User) error {
