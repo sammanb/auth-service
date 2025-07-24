@@ -106,7 +106,7 @@ func (u *UserRepo) GetUsers(tenant_id string, page, limit int) ([]*models.User, 
 func (u *UserRepo) GetUserById(tenant_id, user_id string) (*models.User, error) {
 	var user *models.User
 
-	if err := u.db.Where("tenant_id = ? AND id = ?", tenant_id, user_id).First(&user).Error; err != nil {
+	if err := u.db.Preload("Role").Where("tenant_id = ? AND id = ?", tenant_id, user_id).First(&user).Error; err != nil {
 		return nil, err
 	}
 
