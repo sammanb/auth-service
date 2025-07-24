@@ -38,9 +38,11 @@ func InitApp() *AppContainer {
 
 	permissionRepo := repository.NewPermissionRepository(db)
 
+	authService := services.NewAuthService()
+
 	userRepo := repository.NewUserRepository(db)
-	userService := services.NewUserService(userRepo, roleRepo, permissionRepo)
-	authHandler := handlers.NewAuthHandler(*userService, db)
+	userService := services.NewUserService(userRepo, roleRepo, permissionRepo, authService)
+	authHandler := handlers.NewAuthHandler(*authService, *userService, db)
 
 	tenantRepo := repository.NewTenantRepo(db)
 	tenantService := services.NewTenantSvc(tenantRepo)

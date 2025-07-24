@@ -15,14 +15,16 @@ type UserService struct {
 	userRepo        repository.UserRepository
 	roleRepo        repository.RoleRepository
 	permissionsRepo repository.PermissionRepository
+	authService     AuthServiceInterface
 }
 
 func NewUserService(
 	repo repository.UserRepository,
 	role repository.RoleRepository,
 	permission repository.PermissionRepository,
+	authService AuthServiceInterface,
 ) *UserService {
-	return &UserService{userRepo: repo, roleRepo: role, permissionsRepo: permission}
+	return &UserService{userRepo: repo, roleRepo: role, permissionsRepo: permission, authService: authService}
 }
 
 func (u *UserService) FindUserByEmail(email string) (*models.User, error) {
@@ -73,12 +75,12 @@ func (u *UserService) Login(email, password string) (string, error) {
 	}
 
 	// match password
-	if CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)) {
+	if !u.authService.CompareHashAndPassword([]byte(password), []byte(user.PasswordHash)) {
 		return "", errors.New("incorrect password")
 	}
 
 	// generate jwt token
-	return GenerateJWT(user)
+	return u.authService.GenerateJWT(user)
 }
 
 func (u *UserService) RemoveUserById(tenant_id, user_id string) error {
@@ -137,12 +139,12 @@ func (u *UserService) ResetPassword(tenant_id, user_id, token, password string) 
 	}
 
 	// check token against ResetPasswordTokenHash
-	if !CompareHashAndPassword([]byte(token), []byte(user.ResetPasswordTokenHash)) {
+	if !u.authService.CompareHashAndPassword([]byte(token), []byte(user.ResetPasswordTokenHash)) {
 		appErr := utils.NewAppError(http.StatusBadRequest, "incorrect password reset token")
 		return appErr
 	}
 
-	newPasswordHash, err := HashPassword(password)
+	newPasswordHash, err := u.authService.HashPassword(password)
 	if err != nil {
 		return err
 	}

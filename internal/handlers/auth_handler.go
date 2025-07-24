@@ -18,12 +18,13 @@ type AuthInterface interface {
 }
 
 type AuthHandler struct {
+	authService services.AuthService
 	userService services.UserService
 	db          *gorm.DB
 }
 
-func NewAuthHandler(userService services.UserService, db *gorm.DB) *AuthHandler {
-	return &AuthHandler{userService, db}
+func NewAuthHandler(authService services.AuthService, userService services.UserService, db *gorm.DB) *AuthHandler {
+	return &AuthHandler{authService, userService, db}
 }
 
 func (h *AuthHandler) Health(c *gin.Context) {
@@ -38,7 +39,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := services.HashPassword(req.Password)
+	hashedPassword, err := h.authService.HashPassword(req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
