@@ -22,9 +22,9 @@ func NewTenantSvc(repo repository.TenantRepository) *TenantSvc {
 }
 
 func (s *TenantSvc) CreateTenant(requester *models.User, name string) (*models.Tenant, error) {
-	if requester.Role.Name != utils.RoleSuperAdmin {
-		return nil, ErrUnauthorized
-	}
+	// if requester.Role.Name != utils.RoleSuperAdmin {
+	// 	return nil, ErrUnauthorized
+	// }
 
 	tenant := &models.Tenant{
 		Name: name,

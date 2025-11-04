@@ -7,6 +7,7 @@ const UserContextKey = "currentUser"
 type Action string
 
 var (
+	ActionNone   Action = "none"
 	ActionRead   Action = "read"
 	ActionCreate Action = "create"
 	ActionUpdate Action = "update"

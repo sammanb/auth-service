@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,13 +19,14 @@ type AuthInterface interface {
 }
 
 type AuthHandler struct {
-	authService services.AuthService
-	userService services.UserService
-	db          *gorm.DB
+	authService   services.AuthService
+	userService   services.UserService
+	tenantService services.TenantSvc
+	db            *gorm.DB
 }
 
-func NewAuthHandler(authService services.AuthService, userService services.UserService, db *gorm.DB) *AuthHandler {
-	return &AuthHandler{authService, userService, db}
+func NewAuthHandler(authService services.AuthService, userService services.UserService, tenantService services.TenantSvc, db *gorm.DB) *AuthHandler {
+	return &AuthHandler{authService, userService, tenantService, db}
 }
 
 func (h *AuthHandler) Health(c *gin.Context) {
@@ -45,17 +47,32 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	tenantID, err := uuid.Parse(req.TenantID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	var tenant *models.Tenant
+	isNewTenant := false
+
+	if len(req.TenantID) == 0 {
+		_, err := uuid.Parse(req.TenantID)
+		if err != nil {
+			// create a new tenant
+			isNewTenant = true
+			tenant, err = h.tenantService.CreateTenant(nil, req.Email)
+			if err != nil {
+				log.Println("Error while creating user")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
 	}
 
 	user := &models.User{
 		ID:           uuid.New(),
-		TenantID:     &tenantID,
+		TenantID:     tenant.ID,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
+	}
+
+	if isNewTenant {
+		user.IsOwner = true
 	}
 
 	if err := h.userService.CreateUser(user, h.db); err != nil {
