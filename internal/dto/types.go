@@ -9,7 +9,7 @@ import (
 type SignupRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
-	TenantID string `json:"tenant_id" binding:"required,uuid"`
+	TenantID string `json:"tenant_id" binding:"omitempty,uuid"`
 }
 
 type LoginRequest struct {

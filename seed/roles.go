@@ -1,6 +1,7 @@
 package seed
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -123,11 +124,21 @@ func CreatePermissions(db *gorm.DB, resource utils.Resource, actions []utils.Act
 }
 
 func CreateRole(db *gorm.DB, roleName string, permissions []*models.Permission, isDefault bool) error {
+
+	var tempRole models.Role
+	if err := db.Where("name = ?", roleName).First(&tempRole).Error; err == nil {
+		log.Printf("Role %s already exists", roleName)
+		return errors.New("role already exists")
+	}
+
+	fmt.Println(roleName, tempRole)
+
 	newRole := &models.Role{
 		Name:        roleName,
 		Permissions: permissions,
 		IsDefault:   isDefault,
 	}
+
 	err := db.Create(newRole).Error
 	if err != nil {
 		return err
