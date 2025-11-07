@@ -21,13 +21,14 @@ func NewTenantSvc(repo repository.TenantRepository) *TenantSvc {
 	return &TenantSvc{repo}
 }
 
-func (s *TenantSvc) CreateTenant(requester *models.User, name string) (*models.Tenant, error) {
+func (s *TenantSvc) CreateTenant(requester *models.User, email string) (*models.Tenant, error) {
 	// if requester.Role.Name != utils.RoleSuperAdmin {
 	// 	return nil, ErrUnauthorized
 	// }
 
 	tenant := &models.Tenant{
-		Name: name,
+		Name:  email,
+		Email: email,
 	}
 
 	if err := s.repo.CreateTenant(tenant); err != nil {

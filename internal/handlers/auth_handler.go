@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -47,21 +46,10 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	var tenant *models.Tenant
-	isNewTenant := false
-
-	if len(req.TenantID) == 0 {
-		_, err := uuid.Parse(req.TenantID)
-		if err != nil {
-			// create a new tenant
-			isNewTenant = true
-			tenant, err = h.tenantService.CreateTenant(nil, req.Email)
-			if err != nil {
-				log.Println("Error while creating user")
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-		}
+	tenant, err := h.tenantService.CreateTenant(nil, req.Email)
+	if err != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		return
 	}
 
 	user := &models.User{
@@ -69,10 +57,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		TenantID:     tenant.ID,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
-	}
-
-	if isNewTenant {
-		user.IsOwner = true
+		IsOwner:      true,
 	}
 
 	if err := h.userService.CreateUser(user, h.db); err != nil {
