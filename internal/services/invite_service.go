@@ -31,9 +31,9 @@ func NewInviteService(inviteRepo repository.InviteRepository, userRepo repositor
 	return &InviteService{inviteRepo: inviteRepo, userRepo: userRepo, roleRepo: roleRepo}
 }
 
-func (i *InviteService) CreateInvite(requestor *models.User, email, role string, tenant_id uuid.UUID) (string, error) {
+func (i *InviteService) CreateInvite(requestor *models.User, email, role string) (string, error) {
 
-	existing_invite, _ := i.inviteRepo.GetInviteByEmailTenant(email, tenant_id.String())
+	existing_invite, _ := i.inviteRepo.GetInviteByEmailTenant(email, requestor.TenantID.String())
 
 	if existing_invite != nil {
 		err := utils.NewAppError(http.StatusConflict, "invite already exists")
@@ -45,14 +45,14 @@ func (i *InviteService) CreateInvite(requestor *models.User, email, role string,
 		return "", err
 	}
 
-	_, err = i.roleRepo.GetRoleByName(tenant_id.String(), role)
+	_, err = i.roleRepo.GetRoleByName(requestor.TenantID.String(), role)
 	if err != nil {
 		return "", utils.NewAppError(http.StatusBadRequest, "invalid role name")
 	}
 
 	invite := &models.Invitation{
 		Email:     email,
-		TenantID:  tenant_id,
+		TenantID:  *requestor.TenantID,
 		Role:      role,
 		TokenHash: hashedToken,
 		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),

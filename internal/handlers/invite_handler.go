@@ -29,7 +29,7 @@ func (i *InviteHandler) CreateInvite(c *gin.Context) {
 	}
 
 	requestor := utils.GetCurrentUser(c)
-	token, err := i.inviteService.CreateInvite(requestor, createInviteReq.Email, createInviteReq.Role, createInviteReq.TenantID)
+	token, err := i.inviteService.CreateInvite(requestor, createInviteReq.Email, createInviteReq.Role)
 	if err != nil {
 		if appError, ok := err.(*utils.AppError); ok {
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
