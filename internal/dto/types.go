@@ -22,8 +22,8 @@ type LoginResponse struct {
 }
 
 type CreateInviteRequest struct {
-	Email    string    `json:"email" binding:"required,email"`
-	Role     string    `json:"role" binding:"required"`
+	Email string `json:"email" binding:"required,email"`
+	Role  string `json:"role" binding:"required"`
 }
 
 type CreateTenantRequest struct {
@@ -34,7 +34,7 @@ type AcceptInviteRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	Token    string `json:"token" binding:"required"`
-	TenantID string `json:"tenant_id" binding:"required"`
+	InviteID string `json:"invite_id" binding:"required"`
 }
 
 type UpdateUserRoleRequest struct {

@@ -9,7 +9,7 @@ import (
 
 type User struct {
 	ID                     uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	TenantID               *uuid.UUID `gorm:"type:uuid;uniqueIndex:idx_tenant"`
+	TenantID               *uuid.UUID `gorm:"type:uuid"`
 	Email                  string     `gorm:"uniqueIndex:idx_email;not null" json:"email"`
 	PasswordHash           string     `gorm:"not null" json:"-"`
 	RoleID                 string     `json:"role_id"`

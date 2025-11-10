@@ -29,7 +29,7 @@ func (i *InviteHandler) CreateInvite(c *gin.Context) {
 	}
 
 	requestor := utils.GetCurrentUser(c)
-	token, err := i.inviteService.CreateInvite(requestor, createInviteReq.Email, createInviteReq.Role)
+	token, inviteId, err := i.inviteService.CreateInvite(requestor, createInviteReq.Email, createInviteReq.Role)
 	if err != nil {
 		if appError, ok := err.(*utils.AppError); ok {
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
@@ -40,7 +40,7 @@ func (i *InviteHandler) CreateInvite(c *gin.Context) {
 	}
 
 	// TODO: send token via email
-	fmt.Println(token)
+	fmt.Println("To send email with token and id ", token, inviteId)
 
 	c.JSON(http.StatusCreated, gin.H{"message": "invite sent"})
 }
@@ -60,6 +60,8 @@ func (i *InviteHandler) GetInvites(c *gin.Context) {
 
 func (i *InviteHandler) RemoveInvite(c *gin.Context) {
 	inviteId := c.Query("id")
+
+	fmt.Println(inviteId)
 
 	err := i.inviteService.RemoveInvite(inviteId)
 	if err != nil {
@@ -91,4 +93,14 @@ func (i *InviteHandler) AcceptInvite(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func (i *InviteHandler) ResendInvitation(c *gin.Context) {}
+func (i *InviteHandler) ResendInvitation(c *gin.Context) {
+	inviteId := c.Query("invite_id")
+
+	invitation, err := i.inviteService.GetInviteById(inviteId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, "could not fetch invitation")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("invitation sent out for %s", invitation.Email)})
+}

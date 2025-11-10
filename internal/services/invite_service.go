@@ -15,6 +15,8 @@ import (
 )
 
 type InviteServiceInterface interface {
+	GetInvites(*models.User, int, int) ([]*dto.InviteResponse, error)
+	GetInviteById(string) (*models.Invitation, error)
 	CreateInvite(string, string, string) error
 	RemoveInvite(string) error
 	AcceptInvite(dto.AcceptInviteRequest) error
@@ -31,26 +33,32 @@ func NewInviteService(inviteRepo repository.InviteRepository, userRepo repositor
 	return &InviteService{inviteRepo: inviteRepo, userRepo: userRepo, roleRepo: roleRepo}
 }
 
-func (i *InviteService) CreateInvite(requestor *models.User, email, role string) (string, error) {
+func (i *InviteService) CreateInvite(requestor *models.User, email, role string) (string, string, error) {
 
 	existing_invite, _ := i.inviteRepo.GetInviteByEmailTenant(email, requestor.TenantID.String())
 
 	if existing_invite != nil {
 		err := utils.NewAppError(http.StatusConflict, "invite already exists")
-		return "", err
+		return "", "", err
 	}
 
 	token, hashedToken, err := utils.GenerateRandomToken()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	_, err = i.roleRepo.GetRoleByName(requestor.TenantID.String(), role)
 	if err != nil {
-		return "", utils.NewAppError(http.StatusBadRequest, "invalid role name")
+		return "", "", utils.NewAppError(http.StatusBadRequest, "invalid role name")
+	}
+
+	newId, err := uuid.NewUUID()
+	if err != nil {
+		return "", "", nil
 	}
 
 	invite := &models.Invitation{
+		ID:        newId,
 		Email:     email,
 		TenantID:  *requestor.TenantID,
 		Role:      role,
@@ -61,10 +69,14 @@ func (i *InviteService) CreateInvite(requestor *models.User, email, role string)
 	}
 	err = i.inviteRepo.CreateInvite(invite)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return token, nil
+	return token, newId.String(), nil
+}
+
+func (i *InviteService) GetInviteById(invite_id string) (*models.Invitation, error) {
+	return i.inviteRepo.GetInviteById(invite_id)
 }
 
 func (i *InviteService) GetInvites(requestor *models.User, page, limit int) ([]*dto.InviteResponse, error) {
@@ -89,11 +101,12 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest, db
 	email := acceptInviteReq.Email
 	password := acceptInviteReq.Password
 	token := acceptInviteReq.Token
-	tenant_id := acceptInviteReq.TenantID
+	id := acceptInviteReq.InviteID
 
 	var appError *utils.AppError
 
-	invite, err := i.inviteRepo.GetInviteByEmailTenant(email, tenant_id)
+	// invite, err := i.inviteRepo.GetInviteByEmailTenant(email)
+	invite, err := i.inviteRepo.GetInviteById(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError = utils.NewAppError(http.StatusNotFound, "no invite found for email")
@@ -120,15 +133,13 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest, db
 		return appError
 	}
 
-	user, _ := i.userRepo.FindUserByEmailAndTenant(email, tenant_id)
+	tenantID := invite.TenantID
+
+	// check if user already exists or not
+	user, _ := i.userRepo.FindUserByEmailAndTenant(email, tenantID.String())
 	if user != nil {
 		appError = utils.NewAppError(http.StatusBadRequest, "user already exists")
 		return appError
-	}
-
-	tenantID, err := uuid.Parse(tenant_id)
-	if err != nil {
-		return errors.New("failed to read tenant id")
 	}
 
 	// get role
