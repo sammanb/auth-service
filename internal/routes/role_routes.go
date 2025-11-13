@@ -7,4 +7,6 @@ import (
 
 func RegisterRoleRoutes(router *gin.RouterGroup, roleHandler handlers.RoleHandler) {
 	router.GET("/", roleHandler.GetRoles)
+	router.POST("/", roleHandler.AddRole)
+	router.DELETE("/:id", roleHandler.DeleteRole)
 }

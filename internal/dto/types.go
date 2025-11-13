@@ -70,6 +70,10 @@ type PermissionInfo struct {
 	Code     string `json:"code"`
 }
 
+type RoleRequest struct {
+	Name string `json:"name"`
+}
+
 type RoleResponse struct {
 	ID          string           `json:"id"`
 	Name        string           `json:"name"`

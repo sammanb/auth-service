@@ -93,7 +93,7 @@ func (r *RoleRepo) DeleteRole(id string) error {
 		return err
 	}
 
-	if err := r.db.Delete(role).Error; err != nil {
+	if err := r.db.Delete(&role).Error; err != nil {
 		return err
 	}
 

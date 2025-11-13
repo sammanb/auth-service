@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samvibes/vexop/auth-service/internal/dto"
 	"github.com/samvibes/vexop/auth-service/internal/services"
 	"github.com/samvibes/vexop/auth-service/internal/utils"
 )
@@ -34,7 +35,14 @@ func (r *RoleHandler) GetRoles(c *gin.Context) {
 func (r *RoleHandler) AddRole(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 
-	name := c.Query("name")
+	var roleReq dto.RoleRequest
+
+	if err := c.ShouldBindBodyWithJSON(&roleReq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	name := roleReq.Name
 	if name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "empty role name"})
 		return
@@ -54,9 +62,7 @@ func (r *RoleHandler) AddRole(c *gin.Context) {
 }
 
 func (r *RoleHandler) DeleteRole(c *gin.Context) {
-	user := utils.GetCurrentUser(c)
-
-	id := c.Query("id")
+	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "empty role id"})
 		return
@@ -67,5 +73,5 @@ func (r *RoleHandler) DeleteRole(c *gin.Context) {
 		return
 	}
 
-	c.JSON("message": "role deleted successfully")
+	c.JSON(http.StatusOK, gin.H{"message": "role deleted successfully"})
 }
