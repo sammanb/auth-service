@@ -52,3 +52,20 @@ func (r *RoleHandler) AddRole(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "added role successfully"})
 }
+
+func (r *RoleHandler) DeleteRole(c *gin.Context) {
+	user := utils.GetCurrentUser(c)
+
+	id := c.Query("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "empty role id"})
+		return
+	}
+
+	if err := r.roleService.DeleteRole(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON("message": "role deleted successfully")
+}

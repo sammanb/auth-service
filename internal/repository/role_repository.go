@@ -14,6 +14,7 @@ type RoleRepository interface {
 	GetRoleByName(tenant_id, role_name string) (*models.Role, error)
 	GetRoles(tenant_id string, page, limit int) ([]*dto.RoleResponse, error)
 	AddRole(tenant_id, name string) error
+	DeleteRole(id string) error
 	AddRolePermission(tenant_id, id string, permission *models.Permission) error
 	RemoveRolePermission(tenant_id, id string, permission *models.Permission) error
 	UpdateRolePermissions(role *models.Role) error
@@ -80,6 +81,19 @@ func (r *RoleRepo) AddRole(tenant_id, name string) error {
 	}
 
 	if err := r.db.Create(&models.Role{Name: name, TenantID: &tenantId}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *RoleRepo) DeleteRole(id string) error {
+	var role models.Role
+	if err := r.db.Where("id = ?", id).First(&role).Error; err != nil {
+		return err
+	}
+
+	if err := r.db.Delete(role).Error; err != nil {
 		return err
 	}
 

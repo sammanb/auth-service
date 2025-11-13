@@ -25,3 +25,7 @@ func (r *RoleService) AddRole(tenant_id, name string) error {
 
 	return nil
 }
+
+func (r *RoleService) DeleteRole(id string) error {
+	return r.roleRepo.DeleteRole(id)
+}
