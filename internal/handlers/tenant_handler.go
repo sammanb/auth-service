@@ -9,15 +9,22 @@ import (
 	"github.com/samvibes/vexop/auth-service/internal/utils"
 )
 
-type TenantHandler struct {
-	service services.TenantSvcInterface
+type TenantHandler interface {
+	GetTenants(*gin.Context)
+	GetTenantById(*gin.Context)
+	CreateTenant(*gin.Context)
+	DeleteTenant(*gin.Context)
 }
 
-func NewTenantHandler(service services.TenantSvcInterface) *TenantHandler {
-	return &TenantHandler{service: service}
+type TenantHandlerImpl struct {
+	service services.TenantService
 }
 
-func (h *TenantHandler) GetTenants(c *gin.Context) {
+func NewTenantHandler(service services.TenantService) TenantHandler {
+	return &TenantHandlerImpl{service: service}
+}
+
+func (h *TenantHandlerImpl) GetTenants(c *gin.Context) {
 	idStr, _ := c.GetQuery("id")
 
 	if idStr != "" {
@@ -38,7 +45,7 @@ func (h *TenantHandler) GetTenants(c *gin.Context) {
 	c.JSON(http.StatusOK, tenants)
 }
 
-func (h *TenantHandler) GetTenantById(c *gin.Context) {
+func (h *TenantHandlerImpl) GetTenantById(c *gin.Context) {
 	id, ok := c.GetQuery("id")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required in query"})
@@ -56,7 +63,7 @@ func (h *TenantHandler) GetTenantById(c *gin.Context) {
 	c.JSON(http.StatusOK, tenant)
 }
 
-func (h *TenantHandler) CreateTenant(c *gin.Context) {
+func (h *TenantHandlerImpl) CreateTenant(c *gin.Context) {
 	var req dto.CreateTenantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -78,7 +85,7 @@ func (h *TenantHandler) CreateTenant(c *gin.Context) {
 	c.JSON(http.StatusCreated, tenant)
 }
 
-func (h *TenantHandler) DeleteTenant(c *gin.Context) {
+func (h *TenantHandlerImpl) DeleteTenant(c *gin.Context) {
 	id, ok := c.GetQuery("id")
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required in query"})

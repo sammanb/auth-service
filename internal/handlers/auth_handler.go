@@ -11,28 +11,28 @@ import (
 	"gorm.io/gorm"
 )
 
-type AuthInterface interface {
+type AuthHandler interface {
 	Health(*gin.Context)
 	SignUp(*gin.Context)
 	Login(*gin.Context)
 }
 
-type AuthHandler struct {
+type AuthHandlerImpl struct {
 	authService   services.AuthService
 	userService   services.UserService
-	tenantService services.TenantSvc
+	tenantService services.TenantService
 	db            *gorm.DB
 }
 
-func NewAuthHandler(authService services.AuthService, userService services.UserService, tenantService services.TenantSvc, db *gorm.DB) *AuthHandler {
-	return &AuthHandler{authService, userService, tenantService, db}
+func NewAuthHandler(authService services.AuthService, userService services.UserService, tenantService services.TenantService, db *gorm.DB) AuthHandler {
+	return &AuthHandlerImpl{authService, userService, tenantService, db}
 }
 
-func (h *AuthHandler) Health(c *gin.Context) {
+func (h *AuthHandlerImpl) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "auth service is up and running"})
 }
 
-func (h *AuthHandler) SignUp(c *gin.Context) {
+func (h *AuthHandlerImpl) SignUp(c *gin.Context) {
 	var req dto.SignupRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -68,7 +68,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "user created successfully"})
 }
 
-func (h *AuthHandler) Login(c *gin.Context) {
+func (h *AuthHandlerImpl) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

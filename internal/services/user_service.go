@@ -11,27 +11,40 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserService struct {
+type UserService interface {
+	FindUserByEmail(email string) (*models.User, error)
+	CreateUser(user *models.User, db *gorm.DB) error
+	Login(email, password string) (string, error)
+	RemoveUserById(tenant_id, user_id string) error
+	RemoveUserByEmail(tenant_id string, email string) error
+	InitResetPassword(email string) (string, error)
+	ResetPassword(tenant_id, user_id, token, password string) error
+	GetUsers(tenant_id string, page, limit int) ([]*models.User, error)
+	GetUserById(tenant_id, user_id string) (*models.User, error)
+	UpdateUserRole(tenant_id, user_id, role_name string) error
+}
+
+type UserServiceImpl struct {
 	userRepo        repository.UserRepository
 	roleRepo        repository.RoleRepository
 	permissionsRepo repository.PermissionRepository
-	authService     AuthServiceInterface
+	authService     AuthService
 }
 
 func NewUserService(
 	repo repository.UserRepository,
 	role repository.RoleRepository,
 	permission repository.PermissionRepository,
-	authService AuthServiceInterface,
-) *UserService {
-	return &UserService{userRepo: repo, roleRepo: role, permissionsRepo: permission, authService: authService}
+	authService AuthService,
+) UserService {
+	return &UserServiceImpl{userRepo: repo, roleRepo: role, permissionsRepo: permission, authService: authService}
 }
 
-func (u *UserService) FindUserByEmail(email string) (*models.User, error) {
+func (u *UserServiceImpl) FindUserByEmail(email string) (*models.User, error) {
 	return u.userRepo.FindUserByEmail(email)
 }
 
-func (u *UserService) CreateUser(user *models.User, db *gorm.DB) error {
+func (u *UserServiceImpl) CreateUser(user *models.User, db *gorm.DB) error {
 	err := db.Transaction(func(tx *gorm.DB) error {
 		// copy roles and permissions with this user's tenant id
 		permissionMap, err := u.permissionsRepo.CopyPermissionsTx(tx, user.TenantID.String())
@@ -67,7 +80,7 @@ func (u *UserService) CreateUser(user *models.User, db *gorm.DB) error {
 	return err
 }
 
-func (u *UserService) Login(email, password string) (string, error) {
+func (u *UserServiceImpl) Login(email, password string) (string, error) {
 	// check if user exists
 	user, err := u.userRepo.FindUserByEmail(email)
 	if err != nil {
@@ -83,7 +96,7 @@ func (u *UserService) Login(email, password string) (string, error) {
 	return u.authService.GenerateJWT(user)
 }
 
-func (u *UserService) RemoveUserById(tenant_id, user_id string) error {
+func (u *UserServiceImpl) RemoveUserById(tenant_id, user_id string) error {
 	if err := u.userRepo.RemoveUserById(tenant_id, user_id); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError := utils.NewAppError(http.StatusNotFound, "user not found")
@@ -95,7 +108,7 @@ func (u *UserService) RemoveUserById(tenant_id, user_id string) error {
 	return nil
 }
 
-func (u *UserService) RemoveUserByEmail(tenant_id string, email string) error {
+func (u *UserServiceImpl) RemoveUserByEmail(tenant_id string, email string) error {
 	if err := u.userRepo.RemoveUserByEmail(tenant_id, email); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			appError := utils.NewAppError(http.StatusNotFound, "user not found")
@@ -107,7 +120,7 @@ func (u *UserService) RemoveUserByEmail(tenant_id string, email string) error {
 	return nil
 }
 
-func (u *UserService) InitResetPassword(email string) (string, error) {
+func (u *UserServiceImpl) InitResetPassword(email string) (string, error) {
 	user, err := u.userRepo.FindUserByEmail(email)
 	if err != nil {
 		return "", err
@@ -127,7 +140,7 @@ func (u *UserService) InitResetPassword(email string) (string, error) {
 	return token, nil
 }
 
-func (u *UserService) ResetPassword(tenant_id, user_id, token, password string) error {
+func (u *UserServiceImpl) ResetPassword(tenant_id, user_id, token, password string) error {
 	user, err := u.userRepo.GetUserById(tenant_id, user_id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -160,15 +173,15 @@ func (u *UserService) ResetPassword(tenant_id, user_id, token, password string) 
 	return nil
 }
 
-func (u *UserService) GetUsers(tenant_id string, page, limit int) ([]*models.User, error) {
+func (u *UserServiceImpl) GetUsers(tenant_id string, page, limit int) ([]*models.User, error) {
 	return u.userRepo.GetUsers(tenant_id, page, limit)
 }
 
-func (u *UserService) GetUserById(tenant_id, user_id string) (*models.User, error) {
+func (u *UserServiceImpl) GetUserById(tenant_id, user_id string) (*models.User, error) {
 	return u.userRepo.GetUserById(tenant_id, user_id)
 }
 
-func (u *UserService) UpdateUserRole(tenant_id, user_id, role_name string) error {
+func (u *UserServiceImpl) UpdateUserRole(tenant_id, user_id, role_name string) error {
 	role, err := u.roleRepo.GetRoleByName(tenant_id, role_name)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

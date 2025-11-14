@@ -9,29 +9,29 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthServiceInterface interface {
+type AuthService interface {
 	HashPassword(password string) (string, error)
 	CompareHashAndPassword(password, hashed []byte) bool
 	GenerateJWT(user *models.User) (string, error)
 }
 
-type AuthService struct{}
+type AuthServiceImpl struct{}
 
-func NewAuthService() *AuthService {
-	return &AuthService{}
+func NewAuthService() AuthService {
+	return &AuthServiceImpl{}
 }
 
-func (a *AuthService) HashPassword(password string) (string, error) {
+func (a *AuthServiceImpl) HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err
 }
 
-func (a *AuthService) CompareHashAndPassword(password, hashed []byte) bool {
+func (a *AuthServiceImpl) CompareHashAndPassword(password, hashed []byte) bool {
 	err := bcrypt.CompareHashAndPassword(hashed, password)
 	return err == nil
 }
 
-func (a *AuthService) GenerateJWT(user *models.User) (string, error) {
+func (a *AuthServiceImpl) GenerateJWT(user *models.User) (string, error) {
 	userID := user.ID
 	claims := jwt.MapClaims{
 		"id":  userID.String(),

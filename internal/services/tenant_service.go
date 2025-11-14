@@ -6,22 +6,22 @@ import (
 	"github.com/samvibes/vexop/auth-service/internal/utils"
 )
 
-type TenantSvcInterface interface {
+type TenantService interface {
 	CreateTenant(requester *models.User, name string) (*models.Tenant, error)
 	GetTenants(requestor *models.User, page, limit int) ([]*models.Tenant, error)
 	GetTenantById(requestor *models.User, id string) (*models.Tenant, error)
 	DeleteTenantById(requestor *models.User, id string) (bool, error)
 }
 
-type TenantSvc struct {
+type TenantServiceImpl struct {
 	repo repository.TenantRepository
 }
 
-func NewTenantSvc(repo repository.TenantRepository) *TenantSvc {
-	return &TenantSvc{repo}
+func NewTenantSvc(repo repository.TenantRepository) TenantService {
+	return &TenantServiceImpl{repo}
 }
 
-func (s *TenantSvc) CreateTenant(requester *models.User, email string) (*models.Tenant, error) {
+func (s *TenantServiceImpl) CreateTenant(requester *models.User, email string) (*models.Tenant, error) {
 	// if requester.Role.Name != utils.RoleSuperAdmin {
 	// 	return nil, ErrUnauthorized
 	// }
@@ -38,7 +38,7 @@ func (s *TenantSvc) CreateTenant(requester *models.User, email string) (*models.
 	return tenant, nil
 }
 
-func (s *TenantSvc) GetTenants(requestor *models.User, page, limit int) ([]*models.Tenant, error) {
+func (s *TenantServiceImpl) GetTenants(requestor *models.User, page, limit int) ([]*models.Tenant, error) {
 	if requestor.Role.Name != utils.RoleSuperAdmin {
 		return nil, ErrUnauthorized
 	}
@@ -46,7 +46,7 @@ func (s *TenantSvc) GetTenants(requestor *models.User, page, limit int) ([]*mode
 	return s.repo.GetTenants(page, limit)
 }
 
-func (s *TenantSvc) GetTenantById(requestor *models.User, id string) (*models.Tenant, error) {
+func (s *TenantServiceImpl) GetTenantById(requestor *models.User, id string) (*models.Tenant, error) {
 	if requestor.Role.Name != utils.RoleSuperAdmin {
 		return nil, ErrUnauthorized
 	}
@@ -54,7 +54,7 @@ func (s *TenantSvc) GetTenantById(requestor *models.User, id string) (*models.Te
 	return s.repo.GetTenantById(id)
 }
 
-func (s *TenantSvc) DeleteTenantById(requestor *models.User, id string) (bool, error) {
+func (s *TenantServiceImpl) DeleteTenantById(requestor *models.User, id string) (bool, error) {
 	if requestor.Role.Name != utils.RoleSuperAdmin {
 		return false, ErrUnauthorized
 	}

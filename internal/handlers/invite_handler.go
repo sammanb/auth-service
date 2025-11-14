@@ -11,16 +11,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type InviteHandler struct {
+type InviteHandler interface {
+	GetInvites(*gin.Context)
+	CreateInvite(*gin.Context)
+	RemoveInvite(*gin.Context)
+	AcceptInvite(*gin.Context)
+	ResendInvitation(*gin.Context)
+}
+
+type InviteHandlerImpl struct {
 	inviteService services.InviteService
 	db            *gorm.DB
 }
 
-func NewInviteHandler(inviteService services.InviteService, db *gorm.DB) *InviteHandler {
-	return &InviteHandler{inviteService: inviteService, db: db}
+func NewInviteHandler(inviteService services.InviteService, db *gorm.DB) InviteHandler {
+	return &InviteHandlerImpl{inviteService: inviteService, db: db}
 }
 
-func (i *InviteHandler) CreateInvite(c *gin.Context) {
+func (i *InviteHandlerImpl) CreateInvite(c *gin.Context) {
 	var createInviteReq dto.CreateInviteRequest
 
 	if err := c.ShouldBindJSON(&createInviteReq); err != nil {
@@ -45,7 +53,7 @@ func (i *InviteHandler) CreateInvite(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "invite sent"})
 }
 
-func (i *InviteHandler) GetInvites(c *gin.Context) {
+func (i *InviteHandlerImpl) GetInvites(c *gin.Context) {
 	page, limit := utils.GetPageAndLimit(c)
 
 	requestor := utils.GetCurrentUser(c)
@@ -58,7 +66,7 @@ func (i *InviteHandler) GetInvites(c *gin.Context) {
 	c.JSON(http.StatusOK, invitations)
 }
 
-func (i *InviteHandler) RemoveInvite(c *gin.Context) {
+func (i *InviteHandlerImpl) RemoveInvite(c *gin.Context) {
 	inviteId := c.Query("id")
 
 	fmt.Println(inviteId)
@@ -76,7 +84,7 @@ func (i *InviteHandler) RemoveInvite(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "invite removed successfully"})
 }
 
-func (i *InviteHandler) AcceptInvite(c *gin.Context) {
+func (i *InviteHandlerImpl) AcceptInvite(c *gin.Context) {
 	var acceptInviteReq dto.AcceptInviteRequest
 
 	if err := c.ShouldBindJSON(&acceptInviteReq); err != nil {
@@ -93,7 +101,7 @@ func (i *InviteHandler) AcceptInvite(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func (i *InviteHandler) ResendInvitation(c *gin.Context) {
+func (i *InviteHandlerImpl) ResendInvitation(c *gin.Context) {
 	inviteId := c.Query("invite_id")
 
 	invitation, err := i.inviteService.GetInviteById(inviteId)

@@ -9,15 +9,21 @@ import (
 	"github.com/samvibes/vexop/auth-service/internal/utils"
 )
 
-type RoleHandler struct {
+type RoleHandler interface {
+	GetRoles(*gin.Context)
+	AddRole(*gin.Context)
+	DeleteRole(*gin.Context)
+}
+
+type RoleHandlerImpl struct {
 	roleService services.RoleService
 }
 
-func NewRoleHandler(roleService services.RoleService) *RoleHandler {
-	return &RoleHandler{roleService: roleService}
+func NewRoleHandler(roleService services.RoleService) RoleHandler {
+	return &RoleHandlerImpl{roleService: roleService}
 }
 
-func (r *RoleHandler) GetRoles(c *gin.Context) {
+func (r *RoleHandlerImpl) GetRoles(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 
 	page, limit := utils.GetPageAndLimit(c)
@@ -32,7 +38,7 @@ func (r *RoleHandler) GetRoles(c *gin.Context) {
 	c.JSON(http.StatusOK, roles)
 }
 
-func (r *RoleHandler) AddRole(c *gin.Context) {
+func (r *RoleHandlerImpl) AddRole(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 
 	var roleReq dto.RoleRequest
@@ -61,7 +67,7 @@ func (r *RoleHandler) AddRole(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "added role successfully"})
 }
 
-func (r *RoleHandler) DeleteRole(c *gin.Context) {
+func (r *RoleHandlerImpl) DeleteRole(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "empty role id"})

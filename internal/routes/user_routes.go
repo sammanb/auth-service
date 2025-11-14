@@ -5,7 +5,7 @@ import (
 	"github.com/samvibes/vexop/auth-service/internal/handlers"
 )
 
-func RegisterUserRoutes(router *gin.RouterGroup, userHandler handlers.UserHandlerInterface) {
+func RegisterUserRoutes(router *gin.RouterGroup, userHandler handlers.UserHandler) {
 	router.POST("/password/forgot", userHandler.SendResetPassword)
 	router.POST("/password/reset", userHandler.ResetPassword)
 	router.GET("/", userHandler.GetUsers)

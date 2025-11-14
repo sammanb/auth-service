@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserHandlerInterface interface {
+type UserHandler interface {
 	GetUsers(*gin.Context)
 	GetUserById(*gin.Context)
 	UpdateUserRole(*gin.Context)
@@ -20,16 +20,16 @@ type UserHandlerInterface interface {
 	DeleteUser(c *gin.Context)
 }
 
-type UserHandler struct {
+type UserHandlerImpl struct {
 	userService services.UserService
 	db          *gorm.DB
 }
 
-func NewUserHandler(userService services.UserService, db *gorm.DB) *UserHandler {
-	return &UserHandler{userService: userService, db: db}
+func NewUserHandler(userService services.UserService, db *gorm.DB) UserHandler {
+	return &UserHandlerImpl{userService: userService, db: db}
 }
 
-func (u *UserHandler) GetUsers(c *gin.Context) {
+func (u *UserHandlerImpl) GetUsers(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 
 	page, limit := utils.GetPageAndLimit(c)
@@ -43,7 +43,7 @@ func (u *UserHandler) GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-func (u *UserHandler) GetUserById(c *gin.Context) {
+func (u *UserHandlerImpl) GetUserById(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 
 	user_id := c.Param("id")
@@ -61,7 +61,7 @@ func (u *UserHandler) GetUserById(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (u *UserHandler) UpdateUserRole(c *gin.Context) {
+func (u *UserHandlerImpl) UpdateUserRole(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 
 	var req dto.UpdateUserRoleRequest
@@ -85,7 +85,7 @@ func (u *UserHandler) UpdateUserRole(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "role updated successfully"})
 }
 
-func (u *UserHandler) DeleteUser(c *gin.Context) {
+func (u *UserHandlerImpl) DeleteUser(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 	email := c.Param("email")
 	id := c.Param("id")
@@ -116,7 +116,7 @@ func (u *UserHandler) DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted successfully"})
 }
 
-func (u *UserHandler) SendResetPassword(c *gin.Context) {
+func (u *UserHandlerImpl) SendResetPassword(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 	token, err := u.userService.InitResetPassword(user.Email)
 	if err != nil {
@@ -130,7 +130,7 @@ func (u *UserHandler) SendResetPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "reset password message sent"})
 }
 
-func (u *UserHandler) ResetPassword(c *gin.Context) {
+func (u *UserHandlerImpl) ResetPassword(c *gin.Context) {
 	user := utils.GetCurrentUser(c)
 
 	var req dto.ResetPasswordRequest

@@ -5,19 +5,25 @@ import (
 	"github.com/samvibes/vexop/auth-service/internal/repository"
 )
 
-type RoleService struct {
+type RoleService interface {
+	GetRoles(tenant_id string, page, limit int) ([]*dto.RoleResponse, error)
+	AddRole(tenant_id, name string) error
+	DeleteRole(id string) error
+}
+
+type RoleServiceImpl struct {
 	roleRepo repository.RoleRepository
 }
 
-func NewRoleService(roleRepo repository.RoleRepository) *RoleService {
-	return &RoleService{roleRepo: roleRepo}
+func NewRoleService(roleRepo repository.RoleRepository) RoleService {
+	return &RoleServiceImpl{roleRepo: roleRepo}
 }
 
-func (r *RoleService) GetRoles(tenant_id string, page, limit int) ([]*dto.RoleResponse, error) {
+func (r *RoleServiceImpl) GetRoles(tenant_id string, page, limit int) ([]*dto.RoleResponse, error) {
 	return r.roleRepo.GetRoles(tenant_id, page, limit)
 }
 
-func (r *RoleService) AddRole(tenant_id, name string) error {
+func (r *RoleServiceImpl) AddRole(tenant_id, name string) error {
 	err := r.roleRepo.AddRole(tenant_id, name)
 	if err != nil {
 		return err
@@ -26,6 +32,6 @@ func (r *RoleService) AddRole(tenant_id, name string) error {
 	return nil
 }
 
-func (r *RoleService) DeleteRole(id string) error {
+func (r *RoleServiceImpl) DeleteRole(id string) error {
 	return r.roleRepo.DeleteRole(id)
 }

@@ -12,11 +12,11 @@ import (
 
 type AppContainer struct {
 	DB            *gorm.DB
-	AuthHandler   *handlers.AuthHandler
-	TenantHandler *handlers.TenantHandler
-	InviteHandler *handlers.InviteHandler
-	UserHandler   *handlers.UserHandler
-	RoleHandler   *handlers.RoleHandler
+	AuthHandler   handlers.AuthHandler
+	TenantHandler handlers.TenantHandler
+	InviteHandler handlers.InviteHandler
+	UserHandler   handlers.UserHandler
+	RoleHandler   handlers.RoleHandler
 }
 
 func InitApp() *AppContainer {
@@ -34,7 +34,7 @@ func InitApp() *AppContainer {
 
 	roleRepo := repository.NewRoleRepository(db)
 	roleService := services.NewRoleService(roleRepo)
-	roleHandler := handlers.NewRoleHandler(*roleService)
+	roleHandler := handlers.NewRoleHandler(roleService)
 
 	permissionRepo := repository.NewPermissionRepository(db)
 
@@ -46,13 +46,13 @@ func InitApp() *AppContainer {
 
 	userRepo := repository.NewUserRepository(db)
 	userService := services.NewUserService(userRepo, roleRepo, permissionRepo, authService)
-	authHandler := handlers.NewAuthHandler(*authService, *userService, *tenantService, db)
+	authHandler := handlers.NewAuthHandler(authService, userService, tenantService, db)
 
 	inviteRepo := repository.NewInviteRepository(db)
 	inviteService := services.NewInviteService(inviteRepo, userRepo, roleRepo)
-	inviteHandler := handlers.NewInviteHandler(*inviteService, db)
+	inviteHandler := handlers.NewInviteHandler(inviteService, db)
 
-	userHandler := handlers.NewUserHandler(*userService, db)
+	userHandler := handlers.NewUserHandler(userService, db)
 
 	return &AppContainer{
 		DB:            db,

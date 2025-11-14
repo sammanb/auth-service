@@ -14,26 +14,26 @@ import (
 	"gorm.io/gorm"
 )
 
-type InviteServiceInterface interface {
-	GetInvites(*models.User, int, int) ([]*dto.InviteResponse, error)
-	GetInviteById(string) (*models.Invitation, error)
-	CreateInvite(string, string, string) error
-	RemoveInvite(string) error
-	AcceptInvite(dto.AcceptInviteRequest) error
-	ResendInvite(string) error
+type InviteService interface {
+	GetInvites(requestor *models.User, page, limit int) ([]*dto.InviteResponse, error)
+	GetInviteById(invite_id string) (*models.Invitation, error)
+	CreateInvite(requestor *models.User, email, role string) (string, string, error)
+	RemoveInvite(invite_id string) error
+	AcceptInvite(acceptInviteReq dto.AcceptInviteRequest, db *gorm.DB) error
+	ResendInvite(invite_id string) error
 }
 
-type InviteService struct {
+type InviteServiceImpl struct {
 	inviteRepo repository.InviteRepository
 	userRepo   repository.UserRepository
 	roleRepo   repository.RoleRepository
 }
 
-func NewInviteService(inviteRepo repository.InviteRepository, userRepo repository.UserRepository, roleRepo repository.RoleRepository) *InviteService {
-	return &InviteService{inviteRepo: inviteRepo, userRepo: userRepo, roleRepo: roleRepo}
+func NewInviteService(inviteRepo repository.InviteRepository, userRepo repository.UserRepository, roleRepo repository.RoleRepository) InviteService {
+	return &InviteServiceImpl{inviteRepo: inviteRepo, userRepo: userRepo, roleRepo: roleRepo}
 }
 
-func (i *InviteService) CreateInvite(requestor *models.User, email, role string) (string, string, error) {
+func (i *InviteServiceImpl) CreateInvite(requestor *models.User, email, role string) (string, string, error) {
 
 	existing_invite, _ := i.inviteRepo.GetInviteByEmailTenant(email, requestor.TenantID.String())
 
@@ -75,15 +75,15 @@ func (i *InviteService) CreateInvite(requestor *models.User, email, role string)
 	return token, newId.String(), nil
 }
 
-func (i *InviteService) GetInviteById(invite_id string) (*models.Invitation, error) {
+func (i *InviteServiceImpl) GetInviteById(invite_id string) (*models.Invitation, error) {
 	return i.inviteRepo.GetInviteById(invite_id)
 }
 
-func (i *InviteService) GetInvites(requestor *models.User, page, limit int) ([]*dto.InviteResponse, error) {
+func (i *InviteServiceImpl) GetInvites(requestor *models.User, page, limit int) ([]*dto.InviteResponse, error) {
 	return i.inviteRepo.GetInvites(requestor.TenantID.String(), page, limit)
 }
 
-func (i *InviteService) RemoveInvite(invite_id string) error {
+func (i *InviteServiceImpl) RemoveInvite(invite_id string) error {
 	if _, err := uuid.Parse(invite_id); err != nil {
 		appError := utils.NewAppError(http.StatusBadRequest, "invalid invite id")
 		return appError
@@ -97,7 +97,7 @@ func (i *InviteService) RemoveInvite(invite_id string) error {
 	return err
 }
 
-func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest, db *gorm.DB) error {
+func (i *InviteServiceImpl) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest, db *gorm.DB) error {
 	email := acceptInviteReq.Email
 	password := acceptInviteReq.Password
 	token := acceptInviteReq.Token
@@ -183,7 +183,7 @@ func (i *InviteService) AcceptInvite(acceptInviteReq dto.AcceptInviteRequest, db
 	return nil
 }
 
-func (i *InviteService) ResendInvite(invite_id string) error {
+func (i *InviteServiceImpl) ResendInvite(invite_id string) error {
 	_, err := i.inviteRepo.GetInviteById(invite_id)
 	if err != nil {
 		return err
